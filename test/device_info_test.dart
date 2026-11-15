@@ -57,12 +57,15 @@ void main() {
     expect(profile({"socModel": "SM7550"}).isPrimaryTarget, isTrue);
     expect(profile({"socModel": "SM7635"}).chipName, "Snapdragon 7s Gen 3");
     expect(profile({"socModel": "SM7635"}).isPrimaryTarget, isFalse);
+    expect(profile({"socModel": "SM8450"}).chipName, "Snapdragon 8 Gen 1");
+    expect(profile({"socModel": "SM8450"}).isPrimaryTarget, isFalse);
+    expect(profile({"socModel": "MT6899"}).targetNote, contains("8400 Max"));
   });
 
   test("2024–2026 mainstream parts resolve without a model name", () {
     expect(
       profile({"socModel": "MT6899"}).chipName,
-      "Dimensity 8400 / 8400 Ultra / 8500",
+      "Dimensity 8400 / 8450 / 8500 series",
     );
     expect(profile({"socModel": "MT6899"}).isPrimaryTarget, isTrue);
     expect(profile({"socModel": "MT6897"}).chipName, "Dimensity 8300 / 8350");

@@ -1,5 +1,15 @@
 import "package:flutter/material.dart";
 
+/// Accent choices shared by the main sheet and the settings page.
+const List<(Color, String, String)> kAccentPalette = <(Color, String, String)>[
+  (Color(0xFF20695C), "Pine", "松绿"),
+  (Color(0xFF2F5DA8), "Cobalt", "钴蓝"),
+  (Color(0xFF8A4B2D), "Clay", "陶土"),
+  (Color(0xFF9A6B1F), "Amber", "琥珀"),
+  (Color(0xFF4E5B6B), "Graphite", "石墨"),
+  (Color(0xFF7A3E5C), "Plum", "梅紫"),
+];
+
 /// Material 3 Expressive-ish theme: big continuous-corner shapes, tonal
 /// surfaces with a bit of depth, springy motion. The seed colour comes from
 /// the user's accent choice, so the whole app retints instead of only the

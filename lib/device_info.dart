@@ -125,7 +125,7 @@ class DeviceProfile {
           case "6983":
             return "Dimensity 9000 / 9000+";
           case "6899":
-            return "Dimensity 8400 / 8400 Ultra / 8500";
+            return "Dimensity 8400 / 8450 / 8500 series";
           case "6897":
             return "Dimensity 8300 / 8350";
           case "6896":
@@ -233,8 +233,8 @@ class DeviceProfile {
     return sdkInt > 0 ? "SDK $sdkInt" : "?";
   }
 
-  /// Supported list: Dimensity 9300 and newer, 8400/8500, Snapdragon 8 Gen 3
-  /// and newer (including 8s Gen 4), plus 7 Gen 3/4 and 7+ Gen 2/3.
+  /// Supported list: Dimensity 9300 and newer, 8400/8450/8500, Snapdragon
+  /// 8 Gen 3 and newer (including 8s Gen 4), plus 7 Gen 3/4 and 7+ Gen 2/3.
   /// Snapdragon 7s is deliberately excluded.
   bool get isPrimaryTarget {
     final String name = chipName.toLowerCase();
@@ -243,7 +243,9 @@ class DeviceProfile {
         name.contains("dimensity 9500") ||
         name.contains("dimensity 9600") ||
         name.contains("dimensity 8400") ||
-        name.contains("dimensity 8500")) {
+        name.contains("dimensity 8450") ||
+        name.contains("dimensity 8500") ||
+        name.contains("dimensity 8550")) {
       return true;
     }
     return RegExp(
@@ -265,10 +267,30 @@ class DeviceProfile {
         "骁龙 7s 不在适配名单内，走软件解码；这颗芯片的硬解没有验证，不保证可用。",
       );
     }
+    if (name.contains("8500") || name.contains("8550")) {
+      return S.t(
+        "Dimensity 8500/8550: the hardware encoder path is the same MediaTek tier as 9400, so encoding support is close. The chip is a clocked-up 8400-family part (8400 Ultra / 8400 Max / 8450): 8 × Cortex-A725 and Mali-G720 MC8, not the 9400's X925/A720 CPU or its larger GPU.",
+        "天玑 8500/8550：硬编走和 9400 同一档的 MediaTek 路径，编码器可用性接近。芯片本身是 8400 系的提频版（8400 Ultra、8400 Max、8450）：8 核 Cortex-A725、Mali-G720 MC8，不是 9400 的 X925/A720 架构，GPU 规模也不同。",
+      );
+    }
+    if (name.contains("8400") || name.contains("8450")) {
+      return S.t(
+        "Dimensity 8400 family (8400, 8400 Ultra, 8400 Max, 8450): the same all-big-core design; hardware encode is treated as the 8500 tier.",
+        "天玑 8400 系列（8400、8400 Ultra、8400 Max、8450）：同一套全大核方案，硬编按 8500 同档处理。",
+      );
+    }
+    if (name.contains("snapdragon 8 gen 1") ||
+        name.contains("snapdragon 8+ gen 1") ||
+        name.contains("snapdragon 8 gen 2")) {
+      return S.t(
+        "Recognised, but outside the main tested list. Software decoding works; hardware decoding follows the generic path and is not guaranteed.",
+        "已识别，但不在主验证名单内。软件解码可用；硬解走通用路径，不保证。",
+      );
+    }
     if (isPrimaryTarget) {
       return S.t(
-        "On the tested list: Dimensity 9300+, 8400/8500; Snapdragon 8 Gen 3+, 7 Gen 3/4 and 7+ Gen 2/3.",
-        "在本次验证名单内：天玑 9300 及以上、8400/8500；骁龙 8 Gen 3 及以上、7 Gen 3/4、7+ Gen 2/3。",
+        "On the tested list: Dimensity 9300+, 8400/8450/8500; Snapdragon 8 Gen 3+, 7 Gen 3/4 and 7+ Gen 2/3.",
+        "在本次验证名单内：天玑 9300 及以上、8400/8450/8500；骁龙 8 Gen 3 及以上、7 Gen 3/4、7+ Gen 2/3。",
       );
     }
     return S.t(

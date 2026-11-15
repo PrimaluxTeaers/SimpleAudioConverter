@@ -15,10 +15,30 @@ class ConvertOutcome {
   final PickedFileInfo input;
   final String? outputPath;
   final String? error;
+  final int? bytes;
+  final String? publishedUri;
+  final String? publishedName;
 
-  const ConvertOutcome({required this.input, this.outputPath, this.error});
+  const ConvertOutcome({
+    required this.input,
+    this.outputPath,
+    this.error,
+    this.bytes,
+    this.publishedUri,
+    this.publishedName,
+  });
 
   bool get ok => outputPath != null;
+  bool get published => publishedUri != null;
+
+  ConvertOutcome withPublished(String uri, String name) => ConvertOutcome(
+    input: input,
+    outputPath: outputPath,
+    error: error,
+    bytes: bytes,
+    publishedUri: uri,
+    publishedName: name,
+  );
 }
 
 /// Runs the batch conversion. One ffmpeg session at a time, which keeps memory
@@ -71,9 +91,9 @@ class ConvertEngine {
         settings.format.ext,
       );
       final String outPath = _uniquePath(outputDir, baseName, settings.format.ext);
-      final bool hasVideo = info.mediaInformation
-          .getStreams()
-          .any((s) => s.getType() == "video");
+      final bool hasVideo = info.mediaInformation.getStreams().any(
+        (s) => s.getType() == "video",
+      );
       final String command = buildConvertCommand(
         inputUrl: readUrl,
         outputPath: outPath,
@@ -92,8 +112,12 @@ class ConvertEngine {
           final ReturnCode? rc = await s.getReturnCode();
           if (rc?.isValueSuccess() ?? false) {
             info.path.deleteIfNecessary();
+            int? bytes;
+            try {
+              bytes = File(outPath).lengthSync();
+            } catch (_) {}
             completer.complete(
-              ConvertOutcome(input: info, outputPath: outPath),
+              ConvertOutcome(input: info, outputPath: outPath, bytes: bytes),
             );
           } else if (rc?.isValueCancel() ?? false) {
             completer.complete(

@@ -24,8 +24,10 @@ import "dialogs.dart";
 import "device_info.dart";
 import "l10n.dart";
 import "media_information_view.dart";
+import "output_store.dart";
 import "path.dart";
 import "picked_file_info.dart";
+import "settings.dart";
 import "theme.dart";
 import "utils.dart";
 
@@ -36,6 +38,7 @@ final ValueNotifier<Color> appSeed = ValueNotifier<Color>(kDefaultSeed);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  await S.load();
   try {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final int stored = prefs.getInt("themeSeed") ?? kDefaultSeed.toARGB32();
@@ -131,8 +134,10 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _bitrateController = TextEditingController();
 
   Directory? _outputDir;
+  OutputTarget? _outputTarget;
   bool _probing = false;
   bool _converting = false;
+  bool _publishing = false;
   bool _finished = false;
   int _activeIndex = 0;
   double _activeProgress = 0;
@@ -148,7 +153,9 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _bitrateController.text = _settings.bitrate.toString();
+    S.revision.addListener(_onLanguageChanged);
     _prepareDir();
+    _loadOutputTarget();
     _loadGroups();
     _initShareReceiver();
     DeviceProfile.load().then((DeviceProfile profile) {
@@ -162,8 +169,18 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    S.revision.removeListener(_onLanguageChanged);
     _bitrateController.dispose();
     super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadOutputTarget() async {
+    final OutputTarget? target = await OutputStore.current();
+    if (mounted) setState(() => _outputTarget = target);
   }
 
   Future<void> _prepareDir() async {
@@ -308,7 +325,7 @@ class _HomePageState extends State<HomePage> {
       _activeProgress = 0;
     });
 
-    final List<ConvertOutcome> results = await _engine.run(
+    final List<ConvertOutcome> outcomes = await _engine.run(
       files: _files.map((e) => e.info).toList(),
       settings: _settings,
       outputDir: _outputDir!,
@@ -321,10 +338,36 @@ class _HomePageState extends State<HomePage> {
       },
     );
 
+    final OutputTarget? target = _outputTarget;
+    List<ConvertOutcome> results = outcomes;
+    if (target != null && outcomes.any((ConvertOutcome r) => r.ok)) {
+      if (mounted) {
+        setState(() {
+          _converting = false;
+          _publishing = true;
+          _activeProgress = 1;
+        });
+      }
+      results = await _publishResults(outcomes, target);
+      if (!mounted) return;
+      final int failedCopies = results
+          .where((ConvertOutcome r) => r.ok && !r.published)
+          .length;
+      if (failedCopies > 0) {
+        _toast(
+          S.t(
+            "$failedCopies file(s) could not be written to the picked folder. They are still in the app folder.",
+            "有 $failedCopies 个文件写不进所选文件夹，已留在应用目录里。",
+          ),
+        );
+      }
+    }
+
     if (!mounted) return;
     HapticFeedback.lightImpact();
     setState(() {
       _converting = false;
+      _publishing = false;
       _finished = true;
       _results = results;
       _files.removeWhere(
@@ -342,6 +385,31 @@ class _HomePageState extends State<HomePage> {
     } else if (results.isNotEmpty && results.every((ConvertOutcome r) => !r.ok)) {
       await _showAllFailed();
     }
+  }
+
+  Future<List<ConvertOutcome>> _publishResults(
+    List<ConvertOutcome> results,
+    OutputTarget target,
+  ) async {
+    final List<ConvertOutcome> published = <ConvertOutcome>[];
+    for (final ConvertOutcome outcome in results) {
+      if (!outcome.ok) {
+        published.add(outcome);
+        continue;
+      }
+      final PublishedFile? file = await OutputStore.publish(outcome.outputPath!);
+      if (file == null) {
+        published.add(outcome);
+        continue;
+      }
+      // The tree has its own copy now. Keeping a second one in the app
+      // sandbox only wastes space, so drop the temporary file.
+      try {
+        File(outcome.outputPath!).deleteSync();
+      } catch (_) {}
+      published.add(outcome.withPublished(file.uri, file.name));
+    }
+    return published;
   }
 
   Future<void> _confirmStop() async {
@@ -420,19 +488,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _shareOutcome(ConvertOutcome outcome) async {
-    if (!outcome.ok) return;
+    if (!outcome.ok || outcome.published) return;
+    final File file = File(outcome.outputPath!);
+    if (!file.existsSync()) return;
     await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(outcome.outputPath!)],
-        text: p.basename(outcome.outputPath!),
-      ),
+      ShareParams(files: [XFile(file.path)], text: p.basename(file.path)),
     );
   }
 
   Future<void> _shareAll() async {
     final List<XFile> files = _results
-        .where((r) => r.ok)
-        .map((r) => XFile(r.outputPath!))
+        .where((r) => r.ok && !r.published)
+        .map((r) => File(r.outputPath!))
+        .where((f) => f.existsSync())
+        .map((f) => XFile(f.path))
         .toList();
     if (files.isEmpty) return;
     await SharePlus.instance.share(
@@ -536,9 +605,9 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.clear_all_rounded),
               ),
             IconButton(
-              tooltip: S.t("Accent colour", "主题色"),
-              onPressed: _showThemePicker,
-              icon: const Icon(Icons.palette_outlined),
+              tooltip: S.t("Settings", "设置"),
+              onPressed: _openSettings,
+              icon: const Icon(Icons.settings_outlined),
             ),
             IconButton(
               tooltip: S.t("About", "关于"),
@@ -599,94 +668,26 @@ class _HomePageState extends State<HomePage> {
     return width <= 792 ? 16 : (width - 760) / 2;
   }
 
-  void _showThemePicker() {
-    const List<(Color, String, String)> palette = [
-      (Color(0xFF20695C), "Pine", "松绿"),
-      (Color(0xFF2F5DA8), "Cobalt", "钴蓝"),
-      (Color(0xFF8A4B2D), "Clay", "陶土"),
-      (Color(0xFF9A6B1F), "Amber", "琥珀"),
-      (Color(0xFF4E5B6B), "Graphite", "石墨"),
-      (Color(0xFF7A3E5C), "Plum", "梅紫"),
-    ];
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-      builder: (BuildContext ctx) {
-        final ColorScheme scheme = Theme.of(ctx).colorScheme;
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                S.t("Accent colour", "主题色"),
-                style: Theme.of(ctx).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                S.t("Recolours the whole app, light and dark.", "整套界面跟着换色，深浅色都生效。"),
-                style: Theme.of(ctx).textTheme.bodySmall
-                    ?.copyWith(color: scheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 14,
-                runSpacing: 14,
-                children: palette.map((item) {
-                  final bool selected = appSeed.value.toARGB32() == item.$1.toARGB32();
-                  return GestureDetector(
-                    onTap: () async {
-                      HapticFeedback.selectionClick();
-                      appSeed.value = item.$1;
-                      try {
-                        final SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
-                        await prefs.setInt("themeSeed", item.$1.toARGB32());
-                      } catch (_) {}
-                      if (ctx.mounted) Navigator.of(ctx).pop();
-                    },
-                    child: Column(
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 240),
-                          width: 58,
-                          height: 58,
-                          decoration: BoxDecoration(
-                            color: item.$1,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: selected ? scheme.onSurface : Colors.transparent,
-                              width: 3,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: item.$1.withValues(alpha: 0.4),
-                                blurRadius: 14,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: selected
-                              ? const Icon(Icons.check_rounded, color: Colors.white)
-                              : null,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          S.t(item.$2, item.$3),
-                          style: Theme.of(ctx).textTheme.labelSmall,
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        );
-      },
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (BuildContext ctx) => SettingsPage(
+          seed: appSeed.value,
+          onSeedChanged: (Color color) {
+            appSeed.value = color;
+            unawaited(_saveSeed(color));
+          },
+        ),
+      ),
     );
+    if (mounted) await _loadOutputTarget();
+  }
+
+  Future<void> _saveSeed(Color color) async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setInt("themeSeed", color.toARGB32());
+    } catch (_) {}
   }
 
   void _showAbout() {
@@ -694,16 +695,16 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext ctx) => TimbreDialog(
         icon: Icons.info_outline_rounded,
-        title: "Timbre 1.3.2",
+        title: "Timbre $kAppVersion",
         message: S.t(
           "An unofficial, independently signed build based on SimpleAudioConverter by TechnicJelle. Not an official upstream release.\n\n"
               "Source stays under MPL-2.0; this package is distributed under the same license.\n\n"
               "64-bit only · arm64-v8a. Built for Android 15, 16 and 17; Android 15+ is recommended, older versions are untested. Native Android, HyperOS/MIUI, ColorOS and OriginOS are the main targets.\n\n"
-              "Primary targets: Dimensity 9300 and newer (9300/9400/9500/9600, including Plus/Pro/S rebadges), Snapdragon 8 Gen 3 and newer (including 8s Gen 4). Other chips still convert on the CPU; hardware decode may not hold up.",
+              "Primary targets: Dimensity 9300 and newer (9300/9400/9500/9600, including Plus/Pro/S rebadges), the Dimensity 8400/8450/8500 family; Snapdragon 8 Gen 3 and newer (including 8s Gen 4). Other chips still convert on the CPU; hardware decode may not hold up.",
           "基于 TechnicJelle 的 SimpleAudioConverter 二次开发，非官方独立签名构建，与上游作者无关。\n\n"
               "源码遵循 MPL-2.0，本安装包以同一许可证分发。\n\n"
               "仅 64 位 · arm64-v8a。针对 Android 15、16、17 构建；建议 Android 15 及以上，更低版本未验证。主要照顾原生 Android、澎湃/MIUI、ColorOS 和 OriginOS。\n\n"
-              "主要适配：天玑 9300 及以上（9300/9400/9500/9600，含 Plus/Pro/S 换皮），骁龙 8 第三代及以上（含 8s Gen 4）。其他芯片也能转，靠 CPU 软解，慢一点；硬解不一定稳。",
+              "主要适配：天玑 9300 及以上（9300/9400/9500/9600，含 Plus/Pro/S 换皮），以及天玑 8400/8450/8500 系列；骁龙 8 第三代及以上（含 8s Gen 4）。其他芯片也能转，靠 CPU 软解，慢一点；硬解不一定稳。",
         ),
         primaryLabel: S.t("Close", "关闭"),
       ),
@@ -2366,7 +2367,17 @@ class _HomePageState extends State<HomePage> {
 
   Widget _bottomBar() {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    final String summary = _converting
+    final bool allSaved =
+        _finished &&
+        _results.isNotEmpty &&
+        _results.any((ConvertOutcome r) => r.ok) &&
+        _outputTarget != null &&
+        _results
+            .where((ConvertOutcome r) => r.ok)
+            .every((ConvertOutcome r) => r.published);
+    final String summary = _publishing
+        ? S.t("Saving to the folder…", "正在存到文件夹…")
+        : _converting
         ? S.t(
             "Converting ${_activeIndex + 1} of ${_files.length}",
             "正在转换 ${_activeIndex + 1}/${_files.length}",
@@ -2403,7 +2414,11 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _finished && _results.isNotEmpty ? S.t("Done", "转换完成") : summary,
+                      _publishing
+                          ? S.t("Saving to the folder…", "正在存到文件夹…")
+                          : _finished && _results.isNotEmpty
+                          ? (allSaved ? S.t("Done", "已完成") : S.t("Done", "转换完成"))
+                          : summary,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall,
@@ -2422,18 +2437,46 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(width: 12),
-              if (_converting)
+              if (_publishing)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 18),
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.4),
+                  ),
+                )
+              else if (_converting)
                 IconButton.filledTonal(
                   onPressed: _confirmStop,
                   icon: const Icon(Icons.stop_rounded),
                   tooltip: S.t("Stop", "停止"),
                 )
               else if (_finished && _results.isNotEmpty)
-                FilledButton.icon(
-                  onPressed: _shareAll,
-                  icon: const Icon(Icons.ios_share_rounded),
-                  label: Text(S.t("Share all", "分享全部")),
-                )
+                allSaved
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: scheme.primary,
+                            ),
+                            const SizedBox(width: 7),
+                            Text(
+                              S.t("Done", "已完成"),
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(color: scheme.primary),
+                            ),
+                          ],
+                        ),
+                      )
+                    : FilledButton.icon(
+                        onPressed: _shareAll,
+                        icon: const Icon(Icons.ios_share_rounded),
+                        label: Text(S.t("Share all", "分享全部")),
+                      )
               else
                 FilledButton.icon(
                   onPressed: _files.isEmpty ? null : _start,
@@ -2471,27 +2514,46 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 12),
           ..._results.map((ConvertOutcome r) {
-            final String name = r.ok ? p.basename(r.outputPath!) : r.input.filename;
+            final String name = r.ok
+                ? (r.publishedName ?? p.basename(r.outputPath!))
+                : r.input.filename;
+            final int? size =
+                r.bytes ??
+                (r.ok && File(r.outputPath!).existsSync()
+                    ? File(r.outputPath!).lengthSync()
+                    : null);
+            final String sizeText = intToSize(size) ?? "";
             return ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(
-                r.ok ? Icons.audio_file_rounded : Icons.error_outline_rounded,
+                r.published
+                    ? Icons.check_circle_rounded
+                    : (r.ok ? Icons.audio_file_rounded : Icons.error_outline_rounded),
                 color: r.ok ? scheme.primary : scheme.error,
               ),
               title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
               subtitle: Text(
                 r.ok
-                    ? intToSize(File(r.outputPath!).lengthSync()) ?? ""
+                    ? (r.published ? "$sizeText · ${S.t("Saved", "已保存")}" : sizeText)
                     : (r.error ?? S.t("Failed", "失败")),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               trailing: r.ok
-                  ? IconButton(
-                      onPressed: () => _shareOutcome(r),
-                      icon: const Icon(Icons.ios_share_rounded),
-                      tooltip: S.t("Share", "分享"),
-                    )
+                  ? (r.published
+                        ? Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Text(
+                              S.t("Done", "已完成"),
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(color: scheme.primary),
+                            ),
+                          )
+                        : IconButton(
+                            onPressed: () => _shareOutcome(r),
+                            icon: const Icon(Icons.ios_share_rounded),
+                            tooltip: S.t("Share", "分享"),
+                          ))
                   : null,
             );
           }),

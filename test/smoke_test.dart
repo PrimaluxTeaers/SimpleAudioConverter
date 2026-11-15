@@ -72,7 +72,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets("accent colour sheet opens and applies", (WidgetTester tester) async {
+  testWidgets("settings opens and changes accent colour", (
+    WidgetTester tester,
+  ) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.5;
     addTearDown(tester.view.resetPhysicalSize);
@@ -81,9 +83,10 @@ void main() {
     await tester.pumpWidget(const TimbreApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.palette_outlined));
+    await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
     expect(find.text("Accent colour"), findsOneWidget);
+    expect(find.text("Language"), findsOneWidget);
 
     await tester.tap(find.text("Cobalt"));
     await tester.pumpAndSettle();
