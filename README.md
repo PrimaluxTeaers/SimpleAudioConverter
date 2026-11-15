@@ -8,10 +8,10 @@
 
 ## 下载
 
-- APK（arm64-v8a，41 MB，versionCode 20102）：https://aka.doubaocdn.com/s/g9THD5ybU9
-- 源码快照：https://aka.doubaocdn.com/s/4MVRRJG5Yj
+- APK（arm64-v8a，41 MB，versionCode 20102）：https://aka.doubaocdn.com/s/FBOu5cL6Bh
+- 源码快照：https://aka.doubaocdn.com/s/5kMiheeA3x
 
-APK SHA-256 `b2149aa9d004b49db061935b392c532c302667cf7548616182a0f1bd33af7b71`。16 KB 页对齐用 `zipalign -c -P 16` 验过，签名证书 SHA-256 仍是 `354871FE58DC66F7CB5780F1DEBA20565897C9A4DD0C22154A9549F4E405F3F7`。
+APK SHA-256 `06d0d0149297391142d2d157918175449c2a78cf6d202b63e8796c8ad8b40384`。16 KB 页对齐用 `zipalign -c -P 16` 验过，签名证书 SHA-256 仍是 `354871FE58DC66F7CB5780F1DEBA20565897C9A4DD0C22154A9549F4E405F3F7`。
 
 ## 先说版本
 
@@ -54,13 +54,15 @@ Android 15 之后系统层面没有推翻重来的改动，底层架构还是那
 
 **MP3 可以选版本了。** 详情页的码率面板上方多了版本下拉：MPEG-1、MPEG-2（24 kHz，最高 160 kbps）、MPEG-2.5（12 kHz，最高 64 kbps）。选完码率滑块按该版本的真实上限收口，不会让你在 12 kHz 版本里拖 320 kbps。
 
+其它格式也查过版本差异。AAC 只有 LC，HE-AAC 和 Opus 的其他 profile 这个内置编码器做不出来，所以没有硬塞假版本；FLAC 的 0-12 是压缩等级，不算码流版本，放在预设里。
+
 **硬解失败会直接给退路。** 选了硬件解码、MediaCodec 又打不开文件时，弹窗说明原因，下方一个按钮切到软件并重试。软件也失败，再弹一次，建议换格式或版本。不会只丢一行红字让你自己猜。
 
 **停止转换前先确认。** 批量转到一半点停止，会提示当前文件作废、已完成的文件保留。
 
 **LHDC 和星闪没有装作支持。** LHDC 3.0–5.0、星闪 L2HC 是无线传输编码，不是文件格式，FFmpeg 没有对应编码器。格式说明页里写清楚了，不把它们伪装成能导出的 `.lhdc` 文件。
 
-**体积做了一点减法。** 去掉没用的 `installed_apps` 依赖，重新打开 R8 和资源压缩。
+**体积做了一点减法。** 去掉没用的 `installed_apps` 依赖，重新打开 R8 和资源压缩，APK 从 45 MB 降到 41 MB。再往下压就得自己裁 FFmpeg 的编码器重编 so，这次没做。
 
 ## 1.2 改了什么
 
