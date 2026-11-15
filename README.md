@@ -7,7 +7,7 @@
 ## 下载
 
 - APK（arm64-v8a，45 MB，versionCode 20092）：https://aka.doubaocdn.com/s/VpL8TCuwel
-- 源码快照：https://aka.doubaocdn.com/s/7KtIJDhLm5
+- 源码快照：https://aka.doubaocdn.com/s/zmVtLMymPv
 
 APK SHA-256 `ab38d6e016361fbae6aafcae0c2cb3790c792e4da87750204ccbf1abe50fab46`。16 KB 页对齐用 `zipalign -c -P 16` 验过。
 
