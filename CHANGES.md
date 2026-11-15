@@ -1,10 +1,30 @@
 # 改动清单 / Changes
 
+## 1.2.0（第一个正式版，2026-11）
+
+- 输出格式从 11 种扩到 18 种，新增 AAC(ADTS)、CAF、AU、WavPack、AMR-NB、AMR-WB、E-AC-3。
+- 格式按日常、无损、语音、老格式、其他分组；支持自建分组，长按删除。
+- 每个格式详情滑到底给出推荐预设，点了才生效。
+- 滑块改为长按 0.35 倍速微调、松手吸附；切换按钮补过渡动画。
+- 修掉 AnimatedContainer 在有无阴影之间插值时的负 blur 断言。
+- 修掉设置页下拉框在窄屏下的 RenderFlex 溢出。
+- 界面最大宽度 760、底栏 640，去掉方向锁，适配小窗、分屏、平板；`resizeableActivity=true`。
+- SoC 识别补天玑 9500S、9600M 等换皮别名，新增是否在验证名单内的提示。
+- 应用图标换成青色圆环箭头加音符，各密度与 adaptive icon 重切。
+- 命令追加 `-map_chapters -1`；AMR 强制 8/16 kHz 单声道、固定档位。
+- 版本 1.2.0+9，versionCode 20092，targetSdk 36，仅 arm64-v8a。
+- 1.0.x 与 1.1.x 标为内测、废弃。
+
+## 1.1.1
+
+- 修掉转换后无声音：`-map 0:a:0 -vn -map_metadata 0`。
+- 11 种格式、连续码率、CBR/VBR、批量、双语、改名 Timbre、自定义主题色、SoC 多级兜底。
+
 相对上游 1.0.5 / Against upstream 1.0.5
 
 ## 新增文件 / Added
 
-- `lib/conversion.dart` — 11 种格式定义、连续码率与 VBR 参数、ffmpeg 命令构建（含 `-vn` 修复）。
+- `lib/conversion.dart` — 格式定义、码率与 VBR 参数、ffmpeg 命令构建。
 - `lib/convert_engine.dart` — 批处理引擎，逐个文件会话、进度回调、取消、输出重名处理。
 - `lib/device_info.dart` — SoC 识别与多级兜底、线程建议。
 - `lib/theme.dart` — Material 3 Expressive 主题。
@@ -13,9 +33,9 @@
 ## 修改文件 / Modified
 
 - `lib/main.dart` — 整个界面重写：文件队列、格式选择器、码率面板、性能面板、结果与分享、edge-to-edge。
-- `pubspec.yaml` — 版本 1.1.0+7，新增 `file_picker` 依赖。
-- `android/app/src/main/AndroidManifest.xml` — `enableOnBackInvokedCallback`，应用名"音频转换"。
-- `android/app/build.gradle.kts` — 包名改为 `com.technicjelle.simple_audio_converter.zh`（签名配置未公开）。
+- `pubspec.yaml` — 版本 1.2.0+9。
+- `android/app/src/main/AndroidManifest.xml` — `enableOnBackInvokedCallback`，`resizeableActivity`，应用名 Timbre。
+- `android/app/build.gradle.kts` — 包名 `com.technicjelle.simple_audio_converter.zh`（签名配置未公开）。
 
 ## 未使用但保留 / Kept, unused
 
@@ -32,8 +52,8 @@ ffmpeg -i IN <codec args> -y OUT
 本仓库 / this fork:
 
 ```
-ffmpeg -hide_banner -y [-hwaccel mediacodec] -i IN [-filter:a arnndn] -map 0:a:0 -vn -map_metadata 0 [-ar N] [-ac N] [-threads N] <codec args> "OUT"
+ffmpeg -hide_banner -y [-hwaccel mediacodec] -i IN [-filter:a arnndn] -map 0:a:0 -vn -map_metadata 0 -map_chapters -1 [-ar N] [-ac N] [-threads N] <codec args> "OUT"
 ```
 
-只映射第一条音轨并丢弃全部视频/封面流，是"转出来没声音"的根因修复。
+只映射第一条音轨并丢弃全部视频/封面流，是“转出来没声音”的根因修复。
 Mapping only the first audio stream and dropping video/cover streams is the root-cause fix for silent output.
