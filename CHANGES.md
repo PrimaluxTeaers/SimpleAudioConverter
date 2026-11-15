@@ -1,5 +1,16 @@
 # 改动清单 / Changes
 
+## 1.3.0（当前版本，2026-11）
+
+- MP3 增加版本选择：MPEG-1、MPEG-2（24 kHz / 160 kbps 上限）、MPEG-2.5（12 kHz / 64 kbps 上限），切换后码率滑块按真实范围收口。
+- 硬解失败弹窗：MediaCodec 失败时说明原因，一键切软件并重试；软件也失败再提示换格式或版本。
+- 停止转换前增加确认，说明当前文件作废、已完成文件保留。
+- LHDC 3.0–5.0、星闪 L2HC 在格式说明页标明为无线传输编码，不是文件格式，FFmpeg 无编码器，不提供假的 `.lhdc` 输出。
+- 移除未使用的 `installed_apps` 依赖，重新启用 R8 与资源压缩，APK 从 45 MB 降到 41 MB。
+- README 重写为中英双语，新增 [README.en.md](README.en.md)、[DEVLOG.md](DEVLOG.md)。
+- 版本 1.3.0+10，versionCode 20102，targetSdk 36，仅 arm64-v8a，签名证书不变。
+- 1.0.x、1.1.x 仍标为内测、废弃；1.2.0 是第一个正式版。
+
 ## 1.2.0（第一个正式版，2026-11）
 
 - 输出格式从 11 种扩到 18 种，新增 AAC(ADTS)、CAF、AU、WavPack、AMR-NB、AMR-WB、E-AC-3。
@@ -33,7 +44,7 @@
 ## 修改文件 / Modified
 
 - `lib/main.dart` — 整个界面重写：文件队列、格式选择器、码率面板、性能面板、结果与分享、edge-to-edge。
-- `pubspec.yaml` — 版本 1.2.0+9。
+- `pubspec.yaml` — 版本 1.3.0+10。
 - `android/app/src/main/AndroidManifest.xml` — `enableOnBackInvokedCallback`，`resizeableActivity`，应用名 Timbre。
 - `android/app/build.gradle.kts` — 包名 `com.technicjelle.simple_audio_converter.zh`（签名配置未公开）。
 
