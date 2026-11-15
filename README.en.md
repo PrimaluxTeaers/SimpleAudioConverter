@@ -8,10 +8,10 @@ This is a modified build of [TechnicJelle/SimpleAudioConverter](https://github.c
 
 ## Downloads
 
-- APK (arm64-v8a, 41 MB, versionCode 20102): https://aka.doubaocdn.com/s/g9THD5ybU9
-- Source snapshot: https://aka.doubaocdn.com/s/4MVRRJG5Yj
+- APK (arm64-v8a, 41 MB, versionCode 20102): https://aka.doubaocdn.com/s/FBOu5cL6Bh
+- Source snapshot: https://aka.doubaocdn.com/s/5kMiheeA3x
 
-APK SHA-256: `b2149aa9d004b49db061935b392c532c302667cf7548616182a0f1bd33af7b71`. 16 KB alignment verified with `zipalign -c -P 16`; signing certificate SHA-256 is unchanged at `354871FE58DC66F7CB5780F1DEBA20565897C9A4DD0C22154A9549F4E405F3F7`.
+APK SHA-256: `06d0d0149297391142d2d157918175449c2a78cf6d202b63e8796c8ad8b40384`. 16 KB alignment verified with `zipalign -c -P 16`; signing certificate SHA-256 is unchanged at `354871FE58DC66F7CB5780F1DEBA20565897C9A4DD0C22154A9549F4E405F3F7`.
 
 ## Release status
 
@@ -54,13 +54,15 @@ Split-screen and freeform windows are handled. Starting with Android 16, apps ta
 
 **Selectable format versions.** MP3 now exposes MPEG-1, MPEG-2 (24 kHz, 160 kbps ceiling) and MPEG-2.5 (12 kHz, 64 kbps ceiling). The version control appears above the bitrate panel and clamps the slider to the variant's real range. Formats without multiple real bitstreams do not get a fake version list.
 
+Other formats were checked for real version differences. AAC here is LC only; HE-AAC and alternative Opus profiles are not producible by the bundled encoder, so they are not offered as fake versions. FLAC's 0–12 is a compression level, not a bitstream version, and lives in the presets.
+
 **Hardware decode failures are actionable.** If MediaCodec fails while hardware decode is selected, the app explains what happened and offers a one-tap switch to software with a retry. If software also fails, a second dialog suggests another format or version.
 
 **Stop confirmation.** Interrupting a batch now asks first and explains that the in-flight file is discarded while finished files remain.
 
 **LHDC and NearLink are documented, not faked.** LHDC 3.0–5.0 and NearLink L2HC are wireless transport codecs, not file formats. FFmpeg has no encoder for either, so Timbre does not list them as output formats. The format reference sheet states this in both languages.
 
-**Smaller build.** The unused `installed_apps` dependency was removed, and R8 plus resource shrinking are enabled again.
+**Smaller build.** The unused `installed_apps` dependency was removed, and R8 plus resource shrinking are enabled again. The APK went from 45 MB to 41 MB. Going lower means rebuilding FFmpeg with a trimmed codec set, which was not done here.
 
 The rest of the 1.3 baseline is inherited from 1.2: 18 output formats, category grouping with user-defined groups, presets at the bottom of the detail sheet, long-press fine adjustment on sliders, the teal ring-and-note icon, SoC aliases, and responsive width limits.
 
@@ -101,7 +103,7 @@ flutter pub get
 flutter build apk --release --target-platform android-arm64 --split-per-abi
 ```
 
-Flutter 3.50 / Dart 3.14, JDK 17, Android SDK 36, build-tools 36.0.0, NDK 28.2.13676358. Signing material is not stored in the repository; release builds read `TIMBRE_KEYSTORE`, `TIMBRE_STORE_PASSWORD`, `TIMBRE_KEY_ALIAS` and `TIMBRE_KEY_PASSWORD` from the environment.
+Flutter 3.50 / Dart 3.14, JDK 17, SDK 36, build-tools 36.0.0, NDK 28.2.13676358. Signing material is not stored in the repository; release builds read `TIMBRE_KEYSTORE`, `TIMBRE_STORE_PASSWORD`, `TIMBRE_KEY_ALIAS` and `TIMBRE_KEY_PASSWORD` from the environment.
 
 ## License
 
