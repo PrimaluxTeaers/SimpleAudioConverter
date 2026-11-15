@@ -15,7 +15,6 @@ Timbre is a derivative build assembled from existing open-source projects.
 | share_handler | MIT | Incoming share target |
 | shared_preferences | BSD-3-Clause | Persisting the accent colour |
 | path_provider | BSD-3-Clause | Output directory |
-| installed_apps | Apache-2.0 | Installed-app queries |
 
 Full license texts ship with each package or are available at the linked project.
 Upstream copyright for SimpleAudioConverter belongs to TechnicJelle and its contributors.
@@ -23,8 +22,8 @@ Files added or modified in this repository are distributed under MPL-2.0.
 
 ## What this build changed
 
-- SimpleAudioConverter: app label renamed to Timbre, SoC detection rewritten (multi-key fallback plus MediaTek/Qualcomm alias tables), 18 output formats with category grouping and user-defined groups, presets moved to the bottom of the format sheet, custom accent colour, responsive width limits for split-screen/freeform windows, launcher icon replaced, `android:resizeableActivity="true"`.
+- SimpleAudioConverter: package label renamed to Timbre, SoC detection rewritten (multi-key fallback plus MediaTek/Qualcomm alias tables), 18 output formats with category grouping and user-defined groups, presets moved to the bottom of the format sheet, custom accent colour, responsive width limits for split-screen/freeform windows, launcher icon replaced, `android:resizeableActivity="true"`, selectable MP3 bitstream versions.
 - FFmpegKit (`ffmpeg_kit_flutter_new_audio`): the audio-only package is used as shipped; no source changes. The app layer builds the conversion command, which now starts with `-map 0:a:0 -vn`, ends with `-map_metadata 0 -map_chapters -1`, and forces mono 8/16 kHz for AMR.
 - No changes were pushed to the upstream SimpleAudioConverter, FFmpegKit or FFmpeg repositories. These edits live in this fork and are documented here.
 
-Parts of the 1.2 rewrite (UI layout, format table, tests, README) were drafted with Doubao, an AI assistant, then reviewed, compiled and tested by the maintainer. The conversion engine and FFmpeg command lines were checked against actual encoder output.
+Parts of the 1.2 and 1.3 rewrites (UI layout, format table, tests, README) were drafted with Doubao, an AI assistant, then reviewed, compiled and tested by the maintainer. The conversion engine and FFmpeg command lines were checked against actual encoder output.
