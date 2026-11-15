@@ -1,6 +1,6 @@
 # 开发日志（残卷）
 
-这不是完整变更记录，是从 1.2 到 1.3 的工作笔记里挑出来的部分。有些内容不放出：签名材料、构建机凭据、个别机型的未公开兼容数据，以及和第三方 ROM 内部实现相关的排查记录。删掉的部分不影响下面的结论。
+这不是完整变更记录，是从 1.2 到 1.3.1 的工作笔记里挑出来的部分。有些内容不放出：签名材料、构建机凭据、个别机型的未公开兼容数据，以及和第三方 ROM 内部实现相关的排查记录。删掉的部分不影响下面的结论。
 
 ## 2026-11 上旬：先把 1.2 收尾
 
@@ -26,16 +26,22 @@ WavPack、CAF、AU 一开始按有损配参数，转出来对不上。后来统�
 
 MP3 的版本选择不是把所有版本都摆出来。MPEG-2 和 MPEG-2.5 的采样率、码率上限和 MPEG-1 差很多，选错版本再拖 320 kbps，FFmpeg 会静默降级或者直接报错。所以版本下拉放在码率面板上方，选完立刻 clamp 到该版本的真实范围。
 
-LHDC 和星闪 L2HC 查过资料，也翻过 FFmpeg 的编码器列表。结论是这两个都是无线传输编码，不是容器/文件格式，FFmpeg 没有对应 encoder。硬塞一个 `.lhdc` 扩展名只会让用户拿到一个改名的 AAC。最后决定不做假支持，在格式说明页写清楚。
-
 硬件解码失败的弹窗是补出来的。之前只在结果卡片上标红，用户得自己回设置里关硬解。现在弹窗直接给“切软件并重试”，软件也失败再提示换格式或版本。
+
+## 2026-11-15：1.3.1 的设备识别
+
+有台 REDMI K80 Ultra（天玑 9400+、HyperOS 4、Android 17）在 1.3.0 里显示“未识别 / Android 0”。一开始怀疑是 HyperOS 藏了 `ro.soc.model`，后来发现更基础：`MainActivity` 把 `Build.SUPPORTED_ABIS` 这个 `String[]` 直接塞进 MethodChannel 的 map。StandardMessageCodec 不支持 Java 字符串数组，编码整张 map 时抛异常，Dart 侧 catch 到后返回 `unknown`，于是核心数、架构、SDK 全丢了，连 `sdkInt` 都变成 0。
+
+改法不复杂：数组用 `TextUtils.join` 转成逗号分隔字符串，SDK 和 release 直接用 `Build.VERSION`，不再绕 `SystemProperties`。另外留了三条后路：`getprop` 一次读出全部属性并缓存；`/proc/cpuinfo` 的 `Hardware` 行；`/proc/device-tree/model` 和 `/sys/devices/soc0/*`。HyperOS 把反射禁掉时，至少还有一条能读到东西。
+
+型号映射补了单测：MT6991 对天玑 9400+ / 9400，MT6989 对 9300 / 9300+，MT6993 对 9500 系列，MT6995 对 9600 系列；骁龙那边 SM8650 到 SM8975 逐个过。`SOC_MODEL` 写成 `0` 的机器也有测试，确认会落到 `ro.mediatek.platform`。
 
 ## 没做完和没验证的
 
 - 没有 Android 模拟器，也没有 adb 设备。所有点击、滚动、长按都是 widget 测试里模拟的，真机转码没跑过。
 - AMR-WB 的 muxer 是否真的接受 `-f amr`，只有编码器字符串证据，没在设备上出过文件。
 - WavPack、CAF、AU、E-AC-3 的编码路径同样只有构建内的 encoder 列表证据，没有逐条试转。
-- Android 17 没有对应 SDK 平台，targetSdk 仍是 36，靠行为兼容，没在 17 真机上验过。
+- Android 17 的 SDK 平台仍然没有装，targetSdk 保持 36；17 的识别逻辑有单测，但没有 adb，装包和真机转码要在用户机器上验。
 - 包名保留 `com.technicjelle.simple_audio_converter.zh`，没有改成独立包名。改了会断覆盖升级，旧设置和输出目录也会丢。
 
 ## 给后来改的人
