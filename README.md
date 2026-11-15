@@ -4,16 +4,18 @@
 
 这是 [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter) 的二次开发版，底座、工程结构和文件入口都来自上游。原项目用 MPL-2.0，这个仓库也照样。
 
+[English](README.en.md)
+
 ## 下载
 
-- APK（arm64-v8a，45 MB，versionCode 20092）：https://aka.doubaocdn.com/s/VpL8TCuwel
-- 源码快照：https://aka.doubaocdn.com/s/zmVtLMymPv
+- APK（arm64-v8a，41 MB，versionCode 20102）：https://aka.doubaocdn.com/s/g9THD5ybU9
+- 源码快照：https://aka.doubaocdn.com/s/4MVRRJG5Yj
 
-APK SHA-256 `ab38d6e016361fbae6aafcae0c2cb3790c792e4da87750204ccbf1abe50fab46`。16 KB 页对齐用 `zipalign -c -P 16` 验过。
+APK SHA-256 `b2149aa9d004b49db061935b392c532c302667cf7548616182a0f1bd33af7b71`。16 KB 页对齐用 `zipalign -c -P 16` 验过，签名证书 SHA-256 仍是 `354871FE58DC66F7CB5780F1DEBA20565897C9A4DD0C22154A9549F4E405F3F7`。
 
 ## 先说版本
 
-**1.2.0 是第一个正式版。** 1.0.x 和 1.1.x 都算内测，已经废弃，别再从旧链接装。它们改过包名、改过转换命令，也留着一堆现在看起来没必要的东西。要装就装 1.2。
+**1.3.0 是当前版本，1.2.0 是第一个正式版。** 1.0.x 和 1.1.x 都算内测，已经废弃，别再从旧链接装。它们改过包名、改过转换命令，也留着一堆现在看起来没必要的东西。要装就装 1.3。
 
 包名还是 `com.technicjelle.simple_audio_converter.zh`。没改成独立包名，是因为改了就不能覆盖升级，旧版本的设置和输出目录会断。签名证书也没换。
 
@@ -48,6 +50,18 @@ Android 15 之后系统层面没有推翻重来的改动，底层架构还是那
 
 小窗和分屏是特意处理的。Android 16 起，targetSdk 36 的应用在最小宽度 ≥600dp 的屏幕上会被系统忽略方向、宽高比和可调整性限制，硬锁竖屏会直接铺满窗口。所以界面没有再锁方向，内容最大宽度 760，底栏 640，窄到分屏、宽到平板都不会把控件拉成一条。
 
+## 1.3 改了什么
+
+**MP3 可以选版本了。** 详情页的码率面板上方多了版本下拉：MPEG-1、MPEG-2（24 kHz，最高 160 kbps）、MPEG-2.5（12 kHz，最高 64 kbps）。选完码率滑块按该版本的真实上限收口，不会让你在 12 kHz 版本里拖 320 kbps。
+
+**硬解失败会直接给退路。** 选了硬件解码、MediaCodec 又打不开文件时，弹窗说明原因，下方一个按钮切到软件并重试。软件也失败，再弹一次，建议换格式或版本。不会只丢一行红字让你自己猜。
+
+**停止转换前先确认。** 批量转到一半点停止，会提示当前文件作废、已完成的文件保留。
+
+**LHDC 和星闪没有装作支持。** LHDC 3.0–5.0、星闪 L2HC 是无线传输编码，不是文件格式，FFmpeg 没有对应编码器。格式说明页里写清楚了，不把它们伪装成能导出的 `.lhdc` 文件。
+
+**体积做了一点减法。** 去掉没用的 `installed_apps` 依赖，重新打开 R8 和资源压缩。
+
 ## 1.2 改了什么
 
 **格式从 11 种加到 18 种。** 新增 AAC(ADTS)、CAF、AU、WavPack、AMR-NB、AMR-WB、E-AC-3。加上原来的 MP3、M4A、OGG、Opus、FLAC、WAV、AIFF、ALAC、WMA、MP2、AC-3，现在一共 18 种。
@@ -64,6 +78,10 @@ Android 15 之后系统层面没有推翻重来的改动，底层架构还是那
 
 其它零碎：`-map_chapters -1` 去掉章节轨；AMR 强制 8k/16k 单声道、只给固定档位；WavPack、CAF、AU 走无损路径；`android:resizeableActivity="true"`。
 
+## 想接着改
+
+仓库按 MPL-2.0 开放，欢迎基于 1.3 继续做。改过的文件保留同一许可证、保留上游署名就行。要公开发修改版，建议换自己的包名和签名，别用 `com.technicjelle.simple_audio_converter.zh`，否则用户分不清是官方包还是你的包。开发过程中的取舍和踩坑记在 [DEVLOG.md](DEVLOG.md)，部分敏感内容没有放出。
+
 ## 用到的项目
 
 这个应用是拼出来的，主要部分都不是我写的：
@@ -72,15 +90,15 @@ Android 15 之后系统层面没有推翻重来的改动，底层架构还是那
 - [FFmpegKit](https://github.com/arthenica/ffmpeg-kit)（LGPL-3.0），实际用的是社区分支 `ffmpeg_kit_flutter_new_audio` — 转码运行时。
 - [FFmpeg](https://ffmpeg.org)（LGPL-2.1+）— 编解码和封装。
 - [m3_expressive](https://pub.dev/packages/m3_expressive)（MIT，fabric-apps）— 形变加载器，形状库来自 material_shapes（MIT，Kostiantyn Sokolovskyi）。
-- Flutter（BSD-3-Clause）、file_picker（MIT）、share_plus（BSD-3-Clause）、share_handler（MIT）、shared_preferences（BSD-3-Clause）、path_provider（BSD-3-Clause）、installed_apps（Apache-2.0）。
+- Flutter（BSD-3-Clause）、file_picker（MIT）、share_plus（BSD-3-Clause）、share_handler（MIT）、shared_preferences（BSD-3-Clause）、path_provider（BSD-3-Clause）。
 
 上游 1.0.5 的版权归 TechnicJelle 和贡献者。这个仓库新增和改过的文件同样按 MPL-2.0 走。FFmpegKit 用的是现成的 audio 包，没改它源码；转码命令是在应用层重写的，具体在 [THIRD_PARTY.md](THIRD_PARTY.md) 里写了。
 
 ## 关于 AI
 
-1.2 这轮重构用了 AI 工具：豆包。格式表、界面重排、测试用例和这份 README 都是它先出草稿，我再逐项改、编译、跑测试。转换引擎没让 AI 碰，FFmpeg 命令是照着实际输出一条条验的。
+1.2 和 1.3 的重构用了 AI 工具：豆包。格式表、界面重排、测试用例和这份 README 都是它先出草稿，我再逐项改、编译、跑测试。转换引擎没让 AI 碰，FFmpeg 命令是照着实际输出一条条验的。
 
-代码里能跑的部分以 `flutter analyze` 和 `flutter test` 为准。测试里模拟了点击、切格式、开主题面板、窄屏分屏和长按开详情。没有 Android 模拟器，所以真机转码没跑过，这一条别当成已验证。
+代码里能跑的部分以 `flutter analyze` 和 `flutter test` 为准。测试里模拟了点击、切格式、开主题面板、窄屏分屏、长按开详情、滑块微调、MP3 版本选择和 LHDC/星闪说明。没有 Android 模拟器，所以真机转码没跑过，这一条别当成已验证。
 
 ## 构建
 
