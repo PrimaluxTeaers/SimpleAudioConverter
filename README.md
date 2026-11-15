@@ -9,7 +9,7 @@
 ## 下载
 
 - APK（arm64-v8a，39.8 MB，versionCode 40122）：https://aka.doubaocdn.com/s/Y6Z49JnE31
-- 源码快照：https://aka.doubaocdn.com/s/UdkJJY9bHv
+- 源码快照：[source-1.3.2.zip](source-1.3.2.zip)
 
 APK SHA-256 `9f49baabeddac93fb33b8fa5b56b95acbd649b00d897f7635ed63519fba8d04a`。16 KB 页对齐验过，签名证书 SHA-256 是 `354871FE58DC66F7CB5780F1DEBA20565897C9A4DD0C22154A9549F4E405F3F7`，和 1.3.1 一致。
 
