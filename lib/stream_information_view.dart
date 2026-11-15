@@ -1,6 +1,7 @@
 import "package:ffmpeg_kit_flutter_new_audio/stream_information.dart";
 import "package:flutter/material.dart";
 
+import "l10n.dart";
 import "utils.dart";
 
 class StreamInformationView extends StatelessWidget {
@@ -19,19 +20,19 @@ class StreamInformationView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Stream ${info.getIndex()} Information:",
+          S.t("Stream ${info.getIndex()} Information:", "轨道 ${info.getIndex()} 信息："),
           style: TextTheme.of(
             context,
           ).titleMedium?.copyWith(fontWeight: FontWeight.w500),
         ),
         Table(
           children: [
-            TableRow(children: tr("Type:", info.getType(), context)),
-            TableRow(children: tr("Codec:", info.getCodec(), context)),
-            TableRow(children: tr("Format:", info.getFormat(), context)),
-            TableRow(children: tr("Channel Layout:", info.getChannelLayout(), context)),
-            TableRow(children: tr("Bitrate:", bitrate, context)),
-            TableRow(children: tr("Sample Rate:", info.getSampleRate(), context)),
+            TableRow(children: tr(S.t("Type:", "类型："), info.getType(), context)),
+            TableRow(children: tr(S.t("Codec:", "编码："), info.getCodec(), context)),
+            TableRow(children: tr(S.t("Format:", "格式："), info.getFormat(), context)),
+            TableRow(children: tr(S.t("Channel Layout:", "声道布局："), info.getChannelLayout(), context)),
+            TableRow(children: tr(S.t("Bitrate:", "码率："), bitrate, context)),
+            TableRow(children: tr(S.t("Sample Rate:", "采样率："), info.getSampleRate(), context)),
           ],
         ),
         const SizedBox(height: 4),

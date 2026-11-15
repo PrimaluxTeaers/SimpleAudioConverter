@@ -9,7 +9,7 @@ plugins {
 android {
 	namespace = "com.technicjelle.simple_audio_converter"
 	compileSdk = flutter.compileSdkVersion
-	ndkVersion = flutter.ndkVersion
+	ndkVersion = "28.2.13676358"
 
 	compileOptions {
 		sourceCompatibility = JavaVersion.VERSION_17
@@ -17,7 +17,7 @@ android {
 	}
 
 	defaultConfig {
-		applicationId = "com.technicjelle.simple_audio_converter"
+		applicationId = "com.technicjelle.simple_audio_converter.zh"
 		// You can update the following values to match your application needs.
 		// For more information, see: https://flutter.dev/to/review-gradle-config.
 		minSdk = flutter.minSdkVersion
@@ -26,16 +26,23 @@ android {
 		versionName = flutter.versionName
 	}
 
+	signingConfigs {
+		create("releaseLocal") {
+			// Kept out of the repo. Set these env vars before a release build:
+			// TIMBRE_KEYSTORE, TIMBRE_STORE_PASSWORD, TIMBRE_KEY_ALIAS,
+			// TIMBRE_KEY_PASSWORD.
+			storeFile = file(System.getenv("TIMBRE_KEYSTORE") ?: "../sac-release.p12")
+			storePassword = System.getenv("TIMBRE_STORE_PASSWORD") ?: ""
+			keyAlias = System.getenv("TIMBRE_KEY_ALIAS") ?: "sac"
+			keyPassword = System.getenv("TIMBRE_KEY_PASSWORD") ?: ""
+		}
+	}
+
 	buildTypes {
 		release {
-			// TODO: Add your own signing config for the release build.
-			// Signing with the debug keys for now, so `flutter run --release` works.
-			signingConfig = signingConfigs.getByName("debug")
+			signingConfig = signingConfigs.getByName("releaseLocal")
 
-			// Enables code-related app optimization.
 			isMinifyEnabled = true
-
-			// Enables resource shrinking.
 			isShrinkResources = true
 
 			proguardFiles(

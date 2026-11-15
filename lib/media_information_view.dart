@@ -3,6 +3,7 @@ import "package:flutter/material.dart";
 
 import "picked_file_info.dart";
 import "stream_information_view.dart";
+import "l10n.dart";
 import "utils.dart";
 
 class MediaInformationView extends StatefulWidget {
@@ -29,7 +30,7 @@ class _MediaInformationViewState extends State<MediaInformationView> {
         child: Row(
           children: [
             const Icon(Icons.keyboard_arrow_right),
-            Text("Media Information", style: TextTheme.of(context).titleLarge),
+            Text(S.t("Media Information", "媒体信息"), style: TextTheme.of(context).titleLarge),
           ],
         ),
       );
@@ -51,22 +52,22 @@ class _MediaInformationViewState extends State<MediaInformationView> {
           child: Row(
             children: [
               const Icon(Icons.keyboard_arrow_down),
-              Text("Media Information", style: TextTheme.of(context).titleLarge),
+              Text(S.t("Media Information", "媒体信息"), style: TextTheme.of(context).titleLarge),
             ],
           ),
         ),
         //filenames can get long, so it's outside of the table, to ensure it doesn't get wrapped _too_ much
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: tr("File name:  ", filename, context, inRow: true),
+          children: tr(S.t("File name:  ", "文件名：  "), filename, context, inRow: true),
         ),
         const SizedBox(height: 1),
         Table(
           children: [
-            TableRow(children: tr("Format:", info.getFormat(), context)),
-            TableRow(children: tr("Size:", strToSize(info.getSize()), context)),
-            TableRow(children: tr("Duration:", duration, context)),
-            TableRow(children: tr("Bitrate:", bitrate, context)),
+            TableRow(children: tr(S.t("Format:", "格式："), info.getFormat(), context)),
+            TableRow(children: tr(S.t("Size:", "大小："), strToSize(info.getSize()), context)),
+            TableRow(children: tr(S.t("Duration:", "时长："), duration, context)),
+            TableRow(children: tr(S.t("Bitrate:", "码率："), bitrate, context)),
           ],
         ),
         const SizedBox(height: 8),
