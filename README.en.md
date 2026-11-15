@@ -8,14 +8,19 @@ This is a modified build of [TechnicJelle/SimpleAudioConverter](https://github.c
 
 ## Downloads
 
-- APK (arm64-v8a, 41 MB, versionCode 20102): https://aka.doubaocdn.com/s/FBOu5cL6Bh
-- Source snapshot: https://aka.doubaocdn.com/s/5kMiheeA3x
+- APK (arm64-v8a, 39.8 MB, versionCode 20112): https://aka.doubaocdn.com/s/d9034kq7SI
+- Source snapshot: https://aka.doubaocdn.com/s/Za2BVzaBf7
 
-APK SHA-256: `06d0d0149297391142d2d157918175449c2a78cf6d202b63e8796c8ad8b40384`. 16 KB alignment verified with `zipalign -c -P 16`; signing certificate SHA-256 is unchanged at `354871FE58DC66F7CB5780F1DEBA20565897C9A4DD0C22154A9549F4E405F3F7`.
+APK SHA-256: `6bf4eb3837c6f1a746de20cd9ff1715550d7eeaad5ef7f2b9f80b77d52d9a082`. 16 KB alignment verified with `zipalign -c -P 16`; signing certificate SHA-256 is unchanged at `354871FE58DC66F7CB5780F1DEBA20565897C9A4DD0C22154A9549F4E405F3F7`.
 
 ## Release status
 
-**1.3.0 is the current release.** 1.2.0 was the first official build. Everything before 1.2 (1.0.x, 1.1.x) was internal testing and is discontinued; old links are kept only for reference.
+**1.3.1 is the current release.** 1.3.0 is superseded; 1.2.0 was the first official build. Everything before 1.2 (1.0.x, 1.1.x) was internal testing and is discontinued. Old builds are not repackaged; install 1.3.1 over them.
+
+- 1.3.0: official, superseded by 1.3.1.
+- 1.2.0: first official build, old.
+- 1.1.1 / 1.1.0: internal testing, discontinued.
+- 1.0.5 and earlier: internal testing, discontinued.
 
 The package name remains `com.technicjelle.simple_audio_converter.zh`. Renaming it would break in-place upgrades and orphan the old settings and output folder. The signing certificate is unchanged.
 
@@ -23,7 +28,9 @@ Only `arm64-v8a` is shipped. There is no 32-bit build. Current flagship phones a
 
 ## System requirements
 
-Android 15 or newer is recommended and tested. targetSdk is 36. Android 15 edge-to-edge, 16 KB page alignment and predictive back are implemented; Android 16 and 17 inherit the same behaviour.
+Android 15 or newer is recommended. targetSdk is 36. Android 15 edge-to-edge, 16 KB page alignment and predictive back are implemented; Android 16 and 17 inherit the same behaviour.
+
+On Android 17 with HyperOS 4, some vendor properties are harder to read. 1.3.0 could show "Unknown / Android 0" because the device-info channel put a `String[]` on the wire, which is not a StandardMessageCodec type; the whole call failed. 1.3.1 sends a comma-separated string instead, falls back to `getprop`, then to `/proc/cpuinfo`, device-tree and `soc0`. Dimensity 9400+ class parts now resolve to a name.
 
 The app installs on older versions but those are untested. Expect unknown issues around status bar insets, file picker paths, or background process limits. Updating the OS or trying another device is the practical fix.
 
@@ -50,25 +57,35 @@ Other brands, including HTC, Sony and Nothing, follow AOSP behaviour and have no
 
 Split-screen and freeform windows are handled. Starting with Android 16, apps targeting SDK 36 lose the ability to restrict orientation, aspect ratio and resizability on displays with smallest width ≥600dp. The UI therefore does not lock orientation; content is capped at 760dp and the bottom bar at 640dp so narrow split windows and wide tablets both stay usable.
 
-## What changed in 1.3
+## What changed in 1.3.1
 
-**Selectable format versions.** MP3 now exposes MPEG-1, MPEG-2 (24 kHz, 160 kbps ceiling) and MPEG-2.5 (12 kHz, 64 kbps ceiling). The version control appears above the bitrate panel and clamps the slider to the variant's real range. Formats without multiple real bitstreams do not get a fake version list.
+**Format notes rewritten.** The expanded copy for all 18 formats no longer reads like a spec sheet. Each entry is one line of use plus a few trade-offs. The detail sheet now separates "WHAT IT'S FOR" from "TRADE-OFFS" instead of repeating the same paragraph under a second heading. The full reference sheet uses a separate, shorter note per format, so it is not a copy of the detail sheet. Presets stay at the bottom and apply only when tapped.
 
-Other formats were checked for real version differences. AAC here is LC only; HE-AAC and alternative Opus profiles are not producible by the bundled encoder, so they are not offered as fake versions. FLAC's 0–12 is a compression level, not a bitstream version, and lives in the presets.
+**The full reference is grouped by use.** Everyday, lossless, voice, legacy and others now have their own sections instead of one eighteen-row list. The expanded row carries the plain explanation; engineering limits stay in the detail header.
+
+**Device detection fixed.** The `String[]` bug above is fixed here. Added fallbacks through `getprop`, `/proc/cpuinfo`, `/proc/device-tree/model` and `/sys/devices/soc0/*` so HyperOS builds that hide properties still leave something readable. Dimensity 9400+, 9300+ and Snapdragon 8 Gen 3 and newer were checked against the mapping table.
+
+**Another 3 MB gone.** A 3 MB `AppBar_Icon.png` was still in the asset bundle even though no code referenced it. 1.3.1 drops it from the bundle; the APK goes from 42.8 MB to 39.8 MB. The RNNoise model `std.rnnn` stays because it is actually used.
+
+**Quieter UI.** The hero card lost its heavy shadow, the four sections carry numbers, format chips no longer spring back, and content is centred on wide screens. Split-window behaviour is unchanged and still follows the Android 16 adaptive rules.
+
+## What changed in 1.3.0
+
+**Selectable format versions.** MP3 now exposes MPEG-1, MPEG-2 (24 kHz, 160 kbps ceiling) and MPEG-2.5 (12 kHz, 64 kbps ceiling). The version control appears above the bitrate panel and clamps the slider to the variant's real range.
 
 **Hardware decode failures are actionable.** If MediaCodec fails while hardware decode is selected, the app explains what happened and offers a one-tap switch to software with a retry. If software also fails, a second dialog suggests another format or version.
 
 **Stop confirmation.** Interrupting a batch now asks first and explains that the in-flight file is discarded while finished files remain.
 
-**LHDC and NearLink are documented, not faked.** LHDC 3.0–5.0 and NearLink L2HC are wireless transport codecs, not file formats. FFmpeg has no encoder for either, so Timbre does not list them as output formats. The format reference sheet states this in both languages.
-
 **Smaller build.** The unused `installed_apps` dependency was removed, and R8 plus resource shrinking are enabled again. The APK went from 45 MB to 41 MB. Going lower means rebuilding FFmpeg with a trimmed codec set, which was not done here.
 
-The rest of the 1.3 baseline is inherited from 1.2: 18 output formats, category grouping with user-defined groups, presets at the bottom of the detail sheet, long-press fine adjustment on sliders, the teal ring-and-note icon, SoC aliases, and responsive width limits.
+## What changed in 1.2.0
+
+The format list went from 11 to 18, adding AAC (ADTS), CAF, AU, WavPack, AMR-NB, AMR-WB and E-AC-3. Formats are grouped by use, with user-defined groups. Presets moved to the bottom of the detail sheet and apply only on tap. Sliders gained a 0.35× long-press fine adjustment with snap on release. The launcher icon became the teal ring and note. SoC detection gained rebadged-part aliases and a compatibility note.
 
 ## Forking
 
-The repository is MPL-2.0. You can build on 1.3, provided modified files keep the same license and upstream attribution stays intact. If you publish a modified build, use your own package name and signing key; reusing `com.technicjelle.simple_audio_converter.zh` makes it impossible for users to tell your build from the official one. Notes on trade-offs and known gaps are in [DEVLOG.md](DEVLOG.md) (Chinese); some internal details are omitted.
+The repository is MPL-2.0. You can build on 1.3.1, provided modified files keep the same license and upstream attribution stays intact. If you publish a modified build, use your own package name and signing key; reusing `com.technicjelle.simple_audio_converter.zh` makes it impossible for users to tell your build from the official one. Notes on trade-offs and known gaps are in [DEVLOG.md](DEVLOG.md) (Chinese); some internal details are omitted.
 
 ## Formats
 
@@ -92,9 +109,9 @@ Upstream copyright belongs to TechnicJelle and contributors. New and modified fi
 
 ## AI disclosure
 
-Parts of the 1.2/1.3 rewrite were drafted with Doubao, an AI assistant: UI layout, format tables, tests and these README files. The drafts were reviewed, compiled and tested by the maintainer. The conversion engine was not generated by AI; FFmpeg command lines were checked against actual encoder output.
+Parts of the 1.2–1.3.1 rewrite were drafted with Doubao, an AI assistant: UI layout, format tables, tests and these README files. The drafts were reviewed, compiled and tested by the maintainer. The conversion engine was not generated by AI; FFmpeg command lines were checked against actual encoder output.
 
-`flutter analyze` reports no errors and `flutter test` covers format switching, CBR/VBR, theme changes, narrow split-window layout, long-press presets, slider fine adjustment, the MP3 version selector and the LHDC/NearLink note. There is no Android emulator in the build environment, so on-device conversion has not been verified.
+`flutter analyze` reports no errors. `flutter test` covers format switching, theme changes, narrow split-window layout, long-press presets, slider fine adjustment, the MP3 version selector, format-reference expansion, plus Dimensity 9400+ / 9300+, Snapdragon 8 Gen 3 and newer, and Android 17 detection mappings. There is no Android emulator in the build environment, so on-device conversion has not been verified.
 
 ## Build
 
@@ -103,7 +120,7 @@ flutter pub get
 flutter build apk --release --target-platform android-arm64 --split-per-abi
 ```
 
-Flutter 3.50 / Dart 3.14, JDK 17, SDK 36, build-tools 36.0.0, NDK 28.2.13676358. Signing material is not stored in the repository; release builds read `TIMBRE_KEYSTORE`, `TIMBRE_STORE_PASSWORD`, `TIMBRE_KEY_ALIAS` and `TIMBRE_KEY_PASSWORD` from the environment.
+Flutter 3.50 / Dart 3.14, JDK 17, Android SDK 36, build-tools 36.0.0, NDK 28.2.13676358. 1.3.1 uses versionCode 20112. Signing material is not stored in the repository; release builds read `TIMBRE_KEYSTORE`, `TIMBRE_STORE_PASSWORD`, `TIMBRE_KEY_ALIAS` and `TIMBRE_KEY_PASSWORD` from the environment.
 
 ## License
 
