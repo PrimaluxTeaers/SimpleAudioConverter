@@ -1,0 +1,22 @@
+name: Add app icons
+
+on: workflow_dispatch
+
+permissions:
+  contents: write
+
+jobs:
+  import-icons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download icons
+        run: |
+          mkdir -p assets/app-icons
+          curl -fsSL 'https://aka.doubaocdn.com/s/UPrOBtshcS' -o assets/app-icons/timbre-1024.png
+          curl -fsSL 'https://aka.doubaocdn.com/s/KdJBeNzGiy' -o assets/app-icons/reencode-1024.png
+          git config user.name 'Teacers'
+          git config user.email 'dev@teacers.local'
+          git add assets/app-icons
+          git diff --cached --quiet || git commit -m 'Add Timbre and Reencode app icons'
+          git push
