@@ -30,7 +30,10 @@ class _MediaInformationViewState extends State<MediaInformationView> {
         child: Row(
           children: [
             const Icon(Icons.keyboard_arrow_right),
-            Text(S.t("Media Information", "媒体信息"), style: TextTheme.of(context).titleLarge),
+            Text(
+              S.t("Media Information", "媒体信息"),
+              style: TextTheme.of(context).titleLarge,
+            ),
           ],
         ),
       );
@@ -52,7 +55,10 @@ class _MediaInformationViewState extends State<MediaInformationView> {
           child: Row(
             children: [
               const Icon(Icons.keyboard_arrow_down),
-              Text(S.t("Media Information", "媒体信息"), style: TextTheme.of(context).titleLarge),
+              Text(
+                S.t("Media Information", "媒体信息"),
+                style: TextTheme.of(context).titleLarge,
+              ),
             ],
           ),
         ),
@@ -65,7 +71,9 @@ class _MediaInformationViewState extends State<MediaInformationView> {
         Table(
           children: [
             TableRow(children: tr(S.t("Format:", "格式："), info.getFormat(), context)),
-            TableRow(children: tr(S.t("Size:", "大小："), strToSize(info.getSize()), context)),
+            TableRow(
+              children: tr(S.t("Size:", "大小："), strToSize(info.getSize()), context),
+            ),
             TableRow(children: tr(S.t("Duration:", "时长："), duration, context)),
             TableRow(children: tr(S.t("Bitrate:", "码率："), bitrate, context)),
           ],

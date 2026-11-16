@@ -1,6 +1,28 @@
 # 改动清单
 
-## 1.3.3（当前版本，2026-11-15）
+## 1.5.0（当前版本，2026-11-16）
+
+### 中文
+
+版本号从 1.3.3 跳到 1.5.0，versionCode 6015；arm64-v8a 的最终 versionCode 为 80152（Flutter 3.50 的 ABI 偏移叠加后的实际值），高于上一版的 60132。Android 与 Windows 共用 1.5 版本线；本轮只发 Android，Windows 由另一侧构建。
+
+- 功能基线沿用 1.3.3 的界面修复：设置页、语言切换、主题色、SAF 输出目录、批量队列、硬件失败回退、处理器识别。
+- 仓库说明改成 1.5，修正下载入口到当前仓库；补上 Android 与 Windows 的版本边界。
+- 包名保持 `com.technicjelle.simple_audio_converter.zh`，签名证书不变，旧版可以覆盖安装。
+- `flutter analyze` 与 `flutter test` 在 1.5 源码上重新跑过。
+
+### English
+
+Version jumps from 1.3.3 to 1.5.0, versionCode 6015; the final arm64-v8a versionCode is 80152 (the actual value after Flutter 3.50 ABI offset), above the previous 60132. Android and Windows share the 1.5 line; this release ships Android only, with Windows built separately.
+
+- The feature baseline is the 1.3.3 UI fix: settings page, language switch, accent colour, SAF output folder, batch queue, hardware-failure fallback and processor detection.
+- Repository docs move to 1.5 and point at the current release repository; the Android / Windows boundary is stated explicitly.
+- Package name stays `com.technicjelle.simple_audio_converter.zh`; the signing certificate is unchanged and the new build installs over the old one.
+- `flutter analyze` and `flutter test` were re-run on the 1.5 source.
+
+---
+
+## 1.3.3（2026-11-15）
 
 - 新增设置页：界面语言、主题色、输出目录集中到一处。
 - 语言支持跟随系统、中文、English 三档，手动切换后重启仍保留。

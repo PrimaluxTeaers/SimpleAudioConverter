@@ -25,6 +25,7 @@ import "device_info.dart";
 import "l10n.dart";
 import "media_information_view.dart";
 import "output_store.dart";
+import "page_route.dart";
 import "path.dart";
 import "picked_file_info.dart";
 import "settings.dart";
@@ -139,6 +140,7 @@ class _HomePageState extends State<HomePage> {
   bool _converting = false;
   bool _publishing = false;
   bool _finished = false;
+  Timer? _finishTimer;
   int _activeIndex = 0;
   double _activeProgress = 0;
   List<ConvertOutcome> _results = const [];
@@ -169,6 +171,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _finishTimer?.cancel();
     S.revision.removeListener(_onLanguageChanged);
     _bitrateController.dispose();
     super.dispose();
@@ -365,6 +368,7 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
     HapticFeedback.lightImpact();
+    _finishTimer?.cancel();
     setState(() {
       _converting = false;
       _publishing = false;
@@ -375,6 +379,11 @@ class _HomePageState extends State<HomePage> {
           (r) => r.ok && r.input.path.filename == entry.info.path.filename,
         ),
       );
+    });
+    _finishTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && !_converting && !_publishing) {
+        setState(() => _finished = false);
+      }
     });
 
     final bool hardwareFailed =
@@ -487,6 +496,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _removeResultAt(int index) {
+    if (index < 0 || index >= _results.length) return;
+    HapticFeedback.selectionClick();
+    setState(() => _results = <ConvertOutcome>[..._results]..removeAt(index));
+  }
+
   Future<void> _shareOutcome(ConvertOutcome outcome) async {
     if (!outcome.ok || outcome.published) return;
     final File file = File(outcome.outputPath!);
@@ -520,6 +535,7 @@ class _HomePageState extends State<HomePage> {
         SnackBar(
           content: Text(message),
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -670,7 +686,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _openSettings() async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
+      appPageRoute<void>(
         builder: (BuildContext ctx) => SettingsPage(
           seed: appSeed.value,
           onSeedChanged: (Color color) {
@@ -2513,7 +2529,9 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const SizedBox(height: 12),
-          ..._results.map((ConvertOutcome r) {
+          ..._results.asMap().entries.map((entry) {
+            final int index = entry.key;
+            final ConvertOutcome r = entry.value;
             final String name = r.ok
                 ? (r.publishedName ?? p.basename(r.outputPath!))
                 : r.input.filename;
@@ -2525,6 +2543,7 @@ class _HomePageState extends State<HomePage> {
             final String sizeText = intToSize(size) ?? "";
             return ListTile(
               contentPadding: EdgeInsets.zero,
+              onTap: r.published ? () => _removeResultAt(index) : null,
               leading: Icon(
                 r.published
                     ? Icons.check_circle_rounded
@@ -2541,8 +2560,12 @@ class _HomePageState extends State<HomePage> {
               ),
               trailing: r.ok
                   ? (r.published
-                        ? Padding(
-                            padding: const EdgeInsets.only(left: 8),
+                        ? TextButton(
+                            onPressed: () => _removeResultAt(index),
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 40),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                            ),
                             child: Text(
                               S.t("Done", "已完成"),
                               style: Theme.of(context).textTheme.labelMedium

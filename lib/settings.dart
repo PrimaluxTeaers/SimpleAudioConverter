@@ -6,7 +6,7 @@ import "l10n.dart";
 import "output_store.dart";
 import "theme.dart";
 
-const String kAppVersion = "1.3.3";
+const String kAppVersion = "1.5.0";
 
 /// Settings that do not belong in the conversion sheet: interface language,
 /// the folder results are written to, and the accent colour.
@@ -96,6 +96,7 @@ class _SettingsPageState extends State<SettingsPage> {
         SnackBar(
           content: Text(message),
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),

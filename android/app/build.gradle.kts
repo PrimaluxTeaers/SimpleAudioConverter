@@ -42,8 +42,8 @@ android {
 		release {
 			signingConfig = signingConfigs.getByName("releaseLocal")
 
-			isMinifyEnabled = true
-			isShrinkResources = true
+			isMinifyEnabled = System.getenv("TIMBRE_MINIFY") != "false"
+			isShrinkResources = System.getenv("TIMBRE_MINIFY") != "false"
 
 			proguardFiles(
 				// Default file with automatically generated optimization rules.

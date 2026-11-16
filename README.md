@@ -8,9 +8,9 @@
 
 ## 下载
 
-安装包、源码快照、版本号、校验值和每个版本的改动都在 [Releases](https://github.com/Teacers/SimpleAudioConverter/releases)。这份说明只写软件本身，不再重复发行内容。
+安装包、源码快照、版本号、校验值和每个版本的改动都在 [Releases](https://github.com/PrimaluxTeaers/SimpleAudioConverter/releases)。这份说明只写软件本身，不再重复发行内容。
 
-只提供 `arm64-v8a`。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。
+Android 1.5 只提供 `arm64-v8a`，versionCode 80152。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。Windows 1.5 由另一侧构建，仓库只打 `windows-v1.5.0` 支持标签，不把 Android 包当作 Windows 包发布。
 
 ## 能做什么
 

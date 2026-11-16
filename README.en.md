@@ -8,9 +8,9 @@ This is a modified build of [TechnicJelle/SimpleAudioConverter](https://github.c
 
 ## Download
 
-Installers, source snapshots, version numbers, checksums and per-release changes live in [Releases](https://github.com/Teacers/SimpleAudioConverter/releases). This manual covers the app itself and does not repeat release notes.
+Installers, source snapshots, version numbers, checksums and per-release changes live in [Releases](https://github.com/PrimaluxTeaers/SimpleAudioConverter/releases). This manual covers the app itself and does not repeat release notes.
 
-Only `arm64-v8a` is shipped. The package name stays `com.technicjelle.simple_audio_converter.zh`, so installing over an older build keeps settings. The signing certificate is unchanged.
+Android 1.5 ships `arm64-v8a` only, versionCode 80152. The package name stays `com.technicjelle.simple_audio_converter.zh`, so installing over an older build keeps settings. The signing certificate is unchanged. Windows 1.5 is built separately; the repository carries a `windows-v1.5.0` support tag and does not present the Android APK as a Windows build.
 
 ## What it does
 

@@ -30,9 +30,17 @@ class StreamInformationView extends StatelessWidget {
             TableRow(children: tr(S.t("Type:", "类型："), info.getType(), context)),
             TableRow(children: tr(S.t("Codec:", "编码："), info.getCodec(), context)),
             TableRow(children: tr(S.t("Format:", "格式："), info.getFormat(), context)),
-            TableRow(children: tr(S.t("Channel Layout:", "声道布局："), info.getChannelLayout(), context)),
+            TableRow(
+              children: tr(
+                S.t("Channel Layout:", "声道布局："),
+                info.getChannelLayout(),
+                context,
+              ),
+            ),
             TableRow(children: tr(S.t("Bitrate:", "码率："), bitrate, context)),
-            TableRow(children: tr(S.t("Sample Rate:", "采样率："), info.getSampleRate(), context)),
+            TableRow(
+              children: tr(S.t("Sample Rate:", "采样率："), info.getSampleRate(), context),
+            ),
           ],
         ),
         const SizedBox(height: 4),
