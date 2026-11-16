@@ -47,7 +47,7 @@ jobs:
         run: flutter build windows --release
 
       - name: Inspect output
-        shell: pwwsh
+        shell: pwsh
         run: Get-ChildItem "build/windows/x64/runner/Release" | Select-Object Name, Length
 
       - name: Package

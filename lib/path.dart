@@ -52,11 +52,11 @@ class Path {
 
   @override
   String toString() {
-    return "Path{\"n"
-        "\\tur i: $_uri\"n"
-        "\\tsharedInto: $_sharedInto\"n"
-        "\\tneedsSafing: $_needsSafing\"n"
-        "\\tfilename: $filename\"n"
+    return "Path{\n"
+        "\turi: $_uri\n"
+        "\tsharedInto: $_sharedInto\n"
+        "\tneedsSafing: $_needsSafing\n"
+        "\tfilename: $filename\n"
         "}";
   }
 }
