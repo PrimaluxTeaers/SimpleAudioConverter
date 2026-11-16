@@ -1,6 +1,6 @@
 # Timbre
 
-一个 Android 音频转换器。选文件、选格式、点转换，没有别的活。
+一个 Android 与 Windows 的音频转换器。选文件、选格式、点转换，没有别的活。
 
 这是 [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter) 的二次开发版。底座、Android 工程、文件选择和分享入口都来自上游，原项目用 MPL-2.0，这个仓库也照样。
 
@@ -10,7 +10,17 @@
 
 安装包、源码快照、版本号、校验值和每个版本的改动都在 [Releases](https://github.com/Teacers/SimpleAudioConverter/releases)。这份说明只写软件本身，不再重复发行内容。
 
-只提供 `arm64-v8a`。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。
+Android 只提供 `arm64-v8a`。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。
+
+Windows 版是 x64，对应 Windows 10 与 11，安装包是 zip，解压后直接运行 `Timbre.exe`，没有安装程序。
+
+Windows 7 / 8 / 8.1 不予支持。Flutter 的 Windows 运行时最低就是 Windows 10，这三个系统要另做一套外壳，目前没做，所以不要拿 Windows 包装上去。
+
+只发 64 位，32 位 Windows 不在计划内。
+
+macOS、iPhone、iPad 均无适配计划，仅针对 Android 与 Windows 两个平台。
+
+音频转换全程走 CPU，没有 GPU 加速可开，所以 NVIDIA、AMD、Intel 以及其他厂商的显卡对转换结果没有任何影响。GPU 编码白名单只存在于视频项目 Reencode，与这里无关。
 
 ## 能做什么
 
@@ -79,6 +89,15 @@ SM8450（骁龙 8 Gen 1）、SM8475（8+ Gen 1）、SM8550（8 Gen 2）都能识
 flutter pub get
 flutter build apk --release --target-platform android-arm64 --split-per-abi
 ```
+
+Windows：
+
+```bash
+flutter create --platforms=windows --project-name simple_audio_converter .
+flutter build windows --release
+```
+
+Windows 需要 Visual Studio 2022 的 C++ 桌面负载，只出 x64。FFmpegKit 在首次构建时把预编译的 FFmpeg 8.1.2 DLL 下载进构建目录，仓库里不放二进制。
 
 Flutter 3.50 / Dart 3.14，JDK 17，Android SDK 36，build-tools 36.0.0，NDK 28.2.13676358。签名配置不放在仓库里。
 
