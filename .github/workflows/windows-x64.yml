@@ -1,0 +1,63 @@
+name: Windows x64
+
+# Builds the Timbre Windows package on a real Windows runner. The `windows/`
+# project files are generated here because Flutter can only scaffold them with
+# the platform toolchain present. FFmpegKit downloads its prebuilt FFmpeg 8.1.2
+# DLLs into the build tree on first build, so nothing binary lives in the repo.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - windows-port
+      - main
+    paths:
+      - "lib/**"
+      - ".github/workflows/windows-x64.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show toolchain
+        shell: bash
+        run: |
+          flutter --version
+          flutter config --enable-windows-desktop
+
+      - name: Generate Windows runner
+        shell: bash
+        run: flutter create --platforms=windows --project-name simple_audio_converter .
+
+      - name: Resolve packages
+        shell: bash
+        run: flutter pub get
+
+      - name: Build release
+        shell: bash
+        run: flutter build windows --release
+
+      - name: Inspect output
+        shell: pwwsh
+        run: Get-ChildItem "build/windows/x64/runner/Release" | Select-Object Name, Length
+
+      - name: Package
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "Timbre-windows-x64.zip" -Force
+          Get-Item "Timbre-windows-x64.zip" | Select-Object Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Timbre-windows-x64
+          path: Timbre-windows-x64.zip
+          retention-days: 30

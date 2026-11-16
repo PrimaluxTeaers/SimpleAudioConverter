@@ -22,7 +22,14 @@ class Path {
 
   bool get _needsSafing => !_sharedInto;
 
+  /// Desktop builds receive a real filesystem path from the picker. The SAF
+  /// parameter translation is an Android concept and buys nothing here.
+  bool get _isDesktop => Platform.isWindows || Platform.isLinux;
+
   Future<String?> getUrl() async {
+    if (_isDesktop) {
+      return _uri;
+    }
     if (_needsSafing) {
       return await FFmpegKitConfig.getSafParameterForRead(_uri);
     }
@@ -31,7 +38,12 @@ class Path {
 
   /// If the input file was shared into the app, a copy was made in the app's cache.
   /// That can now be deleted.
+  ///
+  /// On desktop the shared flag comes from the file picker, which hands back the
+  /// user's own file instead of a cache copy. Deleting it would destroy the
+  /// original, so desktop never deletes the input.
   void deleteIfNecessary() {
+    if (_isDesktop) return;
     if (_sharedInto) {
       print("Deleting temporary file: $_uri");
       unawaited(File(_uri).delete());
@@ -40,11 +52,11 @@ class Path {
 
   @override
   String toString() {
-    return "Path{\n"
-        "\turi: $_uri\n"
-        "\tsharedInto: $_sharedInto\n"
-        "\tneedsSafing: $_needsSafing\n"
-        "\tfilename: $filename\n"
+    return "Path{\"n"
+        "\\tur i: $_uri\"n"
+        "\\tsharedInto: $_sharedInto\"n"
+        "\\tneedsSafing: $_needsSafing\"n"
+        "\\tfilename: $filename\"n"
         "}";
   }
 }
