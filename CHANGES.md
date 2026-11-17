@@ -1,29 +1,82 @@
 # 改动清单
 
-## 1.6.0 — 2026-11-17
+## 1.5.0（当前版本，2026-11-16）
 
 ### 中文
 
-1.6 是新基线。1.5 及更早的 Release、tag 和旧文档入口已清理，仓库只保留 1.6 叙事。
+版本号从 1.3.3 跳到 1.5.0，versionCode 6015；arm64-v8a 的最终 versionCode 为 80152（Flutter 3.50 的 ABI 偏移叠加后的实际值），高于上一版的 60132。Android 与 Windows 共用 1.5 版本线；本轮只发 Android，Windows 由另一侧构建。
 
-- 版本升到 1.6.0，arm64-v8a 安装包的 versionCode 由构建偏移决定，高于 1.5。
-- 完成条改为显示后消失，结果卡延迟收成一行摘要；点结果卡立即收起或展开，不再常驻页面。
-- 音频导入只走系统文件管理器，不调用相册，也不申请全盘存储权限。
-- 视频导入继续只替换第一条音轨，视频流复制；视频选择走系统文件选择器。
-- 保留 18 种输出格式、MP3 版本与码率联动、AMR 固定档位、整体音量、统一响度、批量队列和失败切软解。
-- HDR10、HDR10+、杜比视界在视频导入时按“HDR 保留”处理：音轨替换不动视频流，画面和 HDR 信息原样保留。
-- 音频多轨：视频导入会保留全部音轨并逐条重编码；纯音频转码只处理第一条音轨。
-- 主题、语言、输出目录持久化保持原行为；界面过渡、窄屏和小窗排版沿用 1.5 收口后的实现。
+- 功能基线沿用 1.3.3 的界面修复：设置页、语言切换、主题色、SAF 输出目录、批量队列、硬件失败回退、处理器识别。
+- 仓库说明改成 1.5，修正下载入口到当前仓库；补上 Android 与 Windows 的版本边界。
+- 包名保持 `com.technicjelle.simple_audio_converter.zh`，签名证书不变，旧版可以覆盖安装。
+- `flutter analyze` 与 `flutter test` 在 1.5 源码上重新跑过。
 
 ### English
 
-1.6 is the new baseline. Releases, tags and old documentation entry points from 1.5 and earlier were removed; the repository keeps the 1.6 narrative only.
+Version jumps from 1.3.3 to 1.5.0, versionCode 6015; the final arm64-v8a versionCode is 80152 (the actual value after Flutter 3.50 ABI offset), above the previous 60132. Android and Windows share the 1.5 line; this release ships Android only, with Windows built separately.
 
-- Version is 1.6.0; the arm64-v8a versionCode comes from the build offset and is higher than 1.5.
-- The completion bar now disappears; the result card collapses to a one-line summary after a delay and expands or collapses immediately when tapped.
-- Audio import uses the system file manager only, with no gallery picker and no broad storage permission.
-- Video import still replaces the first audio track and copies the video stream; video selection uses the system file picker.
-- Keeps 18 output formats, MP3 version and bitrate limits, fixed AMR rates, overall volume, loudness matching, batch queue and software fallback.
-- HDR10, HDR10+, Dolby Vision are handled as "HDR preservation" during video import: the video stream is untouched, so the picture and HDR metadata survive.
-- Multiple audio tracks: video import preserves and re-encodes every audio track; pure audio conversion handles the first track only.
-- Theme, language and output-folder persistence are unchanged; transitions and narrow-window layout follow the 1.5 close-out implementation.
+- The feature baseline is the 1.3.3 UI fix: settings page, language switch, accent colour, SAF output folder, batch queue, hardware-failure fallback and processor detection.
+- Repository docs move to 1.5 and point at the current release repository; the Android / Windows boundary is stated explicitly.
+- Package name stays `com.technicjelle.simple_audio_converter.zh`; the signing certificate is unchanged and the new build installs over the old one.
+- `flutter analyze` and `flutter test` were re-run on the 1.5 source.
+
+---
+
+## 1.3.3（2026-11-15）
+
+- 新增设置页：界面语言、主题色、输出目录集中到一处。
+- 语言支持跟随系统、中文、English 三档，手动切换后重启仍保留。
+- 输出目录改用系统文件夹选择器授权，授权持久化；Android 15、16、17 走同一套机制。
+- 设置目录后，转换完成的文件直接写入该目录，结果栏显示“已完成”，不再显示分享按钮。未设置目录时仍保留应用目录和分享入口。
+- 写入失败不会删掉本地结果，文件留在应用目录并给出提示。
+- 天玑 8400 系列映射补上 8450、8550，芯片名统一为 8400 / 8450 / 8500 系列；文案说明 8400、8450、8400 Ultra 基本同款，8400 Max 约等于 8500。
+- 修正 8500 与 9400 的表述：硬件编码同属 MediaTek 当代路径，按同档处理；CPU 是 8×A725，GPU 是 G720 MC8，不是 9400 的同一颗芯片。
+- 版本 1.3.3，versionCode 40132，targetSdk 36，仅 arm64-v8a，签名证书不变。
+
+## 1.3.2（已被 1.3.3 取代）
+
+- 性能区改成只看处理器：标题是芯片名，副行是厂商、核心数、架构和 Android 版本。没识别到芯片就写“未识别”，不再显示手机商品名。
+- 补了 2024–2026 的一批芯片：天玑 8400/8400 Ultra/8500、9500M、9600 Pro；骁龙 7 Gen 3/4、7+ Gen 2/3；Exynos 2400/2500。系统把常见信息藏起来时还有别的读取路径。
+- 适配名单写清楚：天玑 9300 及以上、8400/8500；骁龙 8 Gen 3 及以上、7 Gen 3/4、7+ Gen 2/3。7s 全系排除，只能软件解码。
+- 声音新增整体音量 -12 到 +12 dB；正增益自动限幅，避免削波。另加“统一整批响度”，目标 -16 LUFS。
+- 顶部卡片阴影减淡，声音控制接在码率面板内，不再单独加卡。
+- 版本 1.3.2，versionCode 40122，targetSdk 36，仅 arm64-v8a，签名证书不变。
+- 1.3.1、1.3.0 被取代；1.2.0 是第一个正式版；1.0.x、1.1.x 内测、废弃。
+
+## 1.3.1
+
+- 格式说明重写：18 种格式的展开说明改成一句用途加几句取舍，不再复述参数表。
+- 详情页分成“适合拿来做什么”和“用起来的取舍”，全部格式面板另用一段更短的参考文案，并按日常、无损、语音、老格式、其他分组。
+- 修 Android 17 上的设备识别。1.3.0 在部分机器上显示“未识别 / Android 0”，原因是设备信息传递时用了不被支持的数据类型，整次读取失败；改成普通字符串后恢复。
+- 删掉格式展开里重复的传输层备注。
+- 界面收敛：顶部卡片减阴影，四个区块加编号，格式按钮去掉回弹，宽屏内容居中。
+- 移除未使用的 3 MB 图标，APK 从 42.8 MB 降到 39.8 MB。
+- 版本 1.3.1，versionCode 20112，targetSdk 36，仅 arm64-v8a。
+
+## 1.3.0
+
+- MP3 增加版本选择：MPEG-1、MPEG-2（24 kHz / 160 kbps 上限）、MPEG-2.5（12 kHz / 64 kbps 上限），切换后码率滑块按真实范围收口。
+- 硬解失败弹窗：说明原因，一键切软件并重试；软件也失败再提示换格式或版本。
+- 停止转换前增加确认，说明当前文件作废、已完成文件保留。
+- 移除未使用的依赖，重新启用 R8 与资源压缩，APK 从 45 MB 降到 41 MB。
+- 版本 1.3.0+10，versionCode 20102，targetSdk 36，仅 arm64-v8a。
+
+## 1.2.0（第一个正式版）
+
+- 输出格式从 11 种扩到 18 种，新增 AAC(ADTS)、CAF、AU、WavPack、AMR-NB、AMR-WB、E-AC-3。
+- 格式按日常、无损、语音、老格式、其他分组；支持自建分组，长按删除。
+- 每个格式详情滑到底给出推荐预设，点了才生效。
+- 滑块改为长按微调、松手吸附；切换按钮补过渡动画。
+- 界面最大宽度 760、底栏 640，去掉方向锁，适配小窗、分屏、平板。
+- 设备识别补换皮别名，新增是否在验证名单内的提示。
+- 应用图标换成青色圆环箭头加音符，各密度与 adaptive icon 重切。
+- 版本 1.2.0+9，versionCode 20092，targetSdk 36，仅 arm64-v8a。
+
+## 1.1.1（内测，已废弃）
+
+- 修掉转换后无声音：只取第一条音轨、不碰视频、保留元数据。
+- 11 种格式、连续码率、CBR/VBR、批量、双语、改名 Timbre、自定义主题色、设备多级兜底。
+
+## 相对上游 1.0.5
+
+上游是 1.0.5 的底座。这个仓库保留它的工程结构和许可证，重写了界面、格式层、转换队列和设备识别，增加了中文和主题色。新增的主要文件是格式定义、转换引擎、设备信息和主题；改过的是主界面、清单、打包配置和应用名。具体命令和内部读取顺序不放在公开文档里，需要时看源码或本地笔记。
