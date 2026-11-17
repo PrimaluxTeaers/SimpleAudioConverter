@@ -1,29 +1,39 @@
-# Timbre 1.5.0 — Android arm64-v8a（重做版）
+# Timbre 1.6.0 — Android arm64-v8a
 
 ## 中文
 
-1.5 仍在重做，版本号保持 1.5.0。之前的 1.5 Release 和标签已从仓库撤下，这一轮改完后重新构建、重新发布；1.3.3 等旧发布记录不动。
+安装包：`Timbre-AndroidARM64-v8a.apk`  
+最低系统：Android 7.0（API 24）  
+包名：`com.technicjelle.simple_audio_converter.zh`  
+版本：1.6.0  
+SHA-256：`123e740e40e3a1c84fff6eea32867d3895c2fdf0adfc162ea0dcf9444ae46062`
 
-- 视频导入不再只抽音轨：处理第一条音轨，视频流原样复制，画面、分辨率、帧率、HDR 信息保持。
-- 视频输出容器按编码组合选：H.264 / H.265 / AV1 / MPEG-4 加 M4A / AAC / MP3 / ALAC 用 MP4，其余组合用 MKV。只导出音频时仍是普通音频文件。
-- Android 前台服务通知显示当前文件和整体进度；退到后台不再静默中断。
-- 完成条显示约 5 秒后自动收起，结果卡片约 9 秒后收成一行摘要；点结果卡可以立刻收起 / 展开。底部栏、按钮和页面切换补过渡动画。
-- 应用名 `Timbre 64 位`，Windows 版 `Timbre x86-64`，只支持 Windows 10 / 11 x64。
-- 包名 `com.technicjelle.simple_audio_converter.zh` 不变，签名证书不变，旧版可以覆盖安装。
-- README 改为中英上下对照，去掉独立的 `README.en.md` 跳转。
+1.6 是新基线。1.5 及更早的 Release、tag 和旧文档入口已清理。
 
-安装包在重新构建后附上；当前 Release 不挂旧 APK。
+- 完成条显示后会消失，结果卡延迟收成一行摘要；点结果卡立即收起或展开。
+- 音频导入只走系统文件管理器，不调用相册，也不申请全盘存储权限。
+- 视频导入只替换音轨，视频流复制；音轨替换时保留全部音轨并逐条重编码。
+- 视频流、HDR10、HDR10+、杜比视界按“HDR 保留”处理，画面信息不重新编码。
+- 输出格式、MP3 版本与码率联动、AMR 固定档位、音量与响度、批量队列和软解回退保持原行为。
+- 主题、语言、输出目录持久化立即生效；窄屏、小窗、平板排版和过渡动画保持原行为。
+
+已知边界：纯音频转码只处理第一条音轨；视频导入的多音轨会统一为目标音频编码，原音轨编码不保留。真机转码和系统文件夹写入仍未在本轮验证。
 
 ## English
 
-1.5 is still being reworked and the version stays 1.5.0. The previous 1.5 releases and tags were removed from the repository; this round will be rebuilt and republished when it is finished. Releases such as 1.3.3 remain untouched.
+Installer: `Timbre-AndroidARM64-v8a.apk`  
+Minimum Android 7.0 (API 24)  
+Package: `com.technicjelle.simple_audio_converter.zh`  
+Version: 1.6.0  
+SHA-256: `123e740e40e3a1c84fff6eea32867d3895c2fdf0adfc162ea0dcf9444ae46062`
 
-- Video import no longer extracts audio only: it processes the first audio track and copies the video stream, keeping the picture, resolution, frame rate and HDR metadata.
-- The video output container follows the codec pair: H.264 / H.265 / AV1 / MPEG-4 with M4A / AAC / MP3 / ALAC goes to MP4; other combinations go to MKV. Audio-only exports remain plain audio files.
-- An Android foreground-service notification shows the current file and overall progress; leaving the app no longer silently kills the job.
-- The completion bar hides itself after about five seconds and the results card collapses into a one-line summary after about nine seconds. Tapping the card collapses or expands it immediately. The bottom bar, buttons and page changes use transitions.
-- App name `Timbre 64 位`; Windows build `Timbre x86-64`, supporting Windows 10 / 11 x64 only.
-- Package name `com.technicjelle.simple_audio_converter.zh` is unchanged; the signing certificate is unchanged and the build installs over the old one.
-- README is a Chinese/English pair in one file, with no separate `README.en.md` jump.
+1.6 is the new baseline. Releases, tags and old documentation entry points from 1.5 and earlier were removed.
 
-The APK will be attached after the rebuild; this release carries no old APK.
+- The completion bar disappears after showing; the result card collapses to a one-line summary after a delay and expands or collapses immediately when tapped.
+- Audio import uses the system file manager only, with no gallery picker and no broad storage permission.
+- Video import replaces the audio only and copies the video stream; every audio track is preserved and re-encoded.
+- The video stream, HDR10, HDR10+ and Dolby Vision are handled as "HDR preservation"; the picture is not re-encoded.
+- Output formats, MP3 version and bitrate limits, fixed AMR rates, volume and loudness, batch queue and software fallback are unchanged.
+- Theme, language and output-folder persistence apply immediately; narrow-window, small-window and tablet layout and transitions are unchanged.
+
+Known limits: pure audio conversion handles the first audio track only; multiple tracks from a video are all re-encoded to the target codec, so the original per-track codecs are not kept. Physical-device conversion and system folder writes have not been verified in this round.
