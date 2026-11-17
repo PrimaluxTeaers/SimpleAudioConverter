@@ -1,0 +1,87 @@
+name: Windows x64
+
+# Builds the Timbre Windows package on a real Windows runner. The `windows/`
+# project files are generated here because Flutter can only scaffold them with
+# the platform toolchain present. FFmpegKit downloads its prebuilt FFmpeg 8.1.2
+# DLLs into the build tree on first build, so nothing binary lives in the repo.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - windows-port
+      - main
+    paths:
+      - "lib/**"
+      - ".github/workflows/windows-x64.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show toolchain
+        shell: bash
+        run: |
+          flutter --version
+          flutter config --enable-windows-desktop
+
+      - name: Generate Windows runner
+        shell: bash
+        run: flutter create --platforms=windows --project-name simple_audio_converter .
+
+      - name: Resolve packages
+        shell: bash
+        run: flutter pub get
+
+      - name: Apply the Timbre icon
+        shell: pwsh
+        run: |
+          Copy-Item "assets/app-icons/timbre.ico" "windows/runner/resources/app_icon.ico" -Force
+          Get-Item "windows/runner/resources/app_icon.ico" | Select-Object Name, Length
+
+      - name: Build release
+        shell: bash
+        run: flutter build windows --release
+
+      - name: Inspect output
+        shell: pwsh
+        run: Get-ChildItem "build/windows/x64/runner/Release" | Select-Object Name, Length
+
+      - name: Package
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "Timbre-WindowsX86-64-1.6.0.zip" -Force
+          Get-Item "Timbre-WindowsX86-64-1.6.0.zip" | Select-Object Name, Length
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Timbre-WindowsX86-64-1.6.0
+          path: Timbre-WindowsX86-64-1.6.0.zip
+          retention-days: 30
+
+      - name: Publish Windows release
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          tag_name: windows-v1.6.0
+          name: Timbre 1.6.0 — Windows x86-64
+          body: |
+            Windows x86-64 build for Timbre 1.6.0.
+
+            Unzip the package and run `simple_audio_converter.exe`. Audio encoding stays on the bundled FFmpeg; no GPU encoding is claimed. Windows 10/11 x64 only.
+          files: Timbre-WindowsX86-64-1.6.0.zip
+          fail_on_unmatched_files: true
+          prerelease: false
+          make_latest: false
