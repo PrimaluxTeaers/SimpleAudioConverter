@@ -1,0 +1,26 @@
+name: Publish release assets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 44102255709 -R PrimaluxTeaers/SimpleAudioConverter -n Timbre-WindowsX86-64-1.6.0 -D windows
+          find windows -type f -maxdepth 2 -printf '%p %s bytes\n'
+
+      - name: Download Android APK
+        run: curl -L --fail --retry 3 -o Timbre-AndroidARM64-v8a-1.6.0.apk https://aka.doubaocdn.com/s/MURDL6QyC5
+
+      - name: Upload assets to v1.6.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload v1.6.0 -R PrimaluxTeaers/SimpleAudioConverter windows/*.zip Timbre-AndroidARM64-v8a-1.6.0.apk --clobber
