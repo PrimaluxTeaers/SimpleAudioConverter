@@ -1,10 +1,10 @@
 # Timbre
 
-Android 音频转换器。选文件、选格式、点转换，没有别的活。导入视频时只改音轨，画面原样保留。
+Android 音频转换器。选文件、选格式、点转换，没有别的活。导入视频时只改音轨，画面原样保留。1.6 是新基线，1.5 及更早的发布记录和旧文档入口已清理。
 
 这是 [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter) 的二次开发版。底座、Android 工程、文件选择和分享入口来自上游，原项目用 MPL-2.0，这个仓库也照样。
 
-Android 版只提供 arm64-v8a，应用名显示为 **Timbre 64 位**。Windows 版另行构建，名称为 **Timbre x86-64**，只支持 Windows 10 / 11 x64。
+Android 版只提供 arm64-v8a，应用名显示为 **Timbre 64 位**，安装包命名 `Timbre-AndroidARM64-v8a.apk`。Windows 版另行构建，名称为 **Timbre x86-64**，安装包命名 `Timbre-WindowsX86-64`，只支持 Windows 10 / 11 x64。
 
 ## 能做什么
 
@@ -22,12 +22,12 @@ MP3 可以选 MPEG-1、MPEG-2 和 MPEG-2.5。切版本后码率上限跟着变�
 
 输出容器按编码组合选：视频是 H.264 / H.265 / AV1 / MPEG-4，音频选 M4A / AAC / MP3 / ALAC 时用 MP4；其余组合用 MKV。只导出音频时还是普通的音频文件，不会包一层视频空壳。
 
-这条路径只换音轨，不做视频转码。要改画面请用 Reencode。反过来，Reencode 的合并页也能把一条外部音轨放回视频里。
+这条路径只换音轨，不做视频转码。源文件有多条音轨时全部保留，统一重编码为目标音频格式，原音轨编码不保留。要改画面请用 Reencode。反过来，Reencode 的合并页也能把一条外部音轨放回视频里。
 
 ## Android 体验
 
 - 转换在 Android 前台服务里跑，通知栏显示当前文件和整体进度，退到后台不会静默中断。
-- 完成条显示约 5 秒后自动收起，结果卡片约 9 秒后收成一行摘要；点结果卡可以立刻收起 / 展开，不会一直占着页面；底部操作栏、按钮和页面切换都有过渡动画。
+- 完成条显示后会消失，结果卡片延迟收成一行摘要；点结果卡可以立刻收起 / 展开，不会一直占着页面；底部操作栏、按钮和页面切换都有过渡动画。
 - 平板、折叠屏和小窗按可用宽度排版，内容最大宽度 760，底栏 640；界面没有锁方向。
 - 设置页的语言、主题色、输出目录都立即生效。输出目录用系统文件夹选择器授权，重启后仍然有效。
 
@@ -66,7 +66,7 @@ SM8450（骁龙 8 Gen 1）、SM8475（8+ Gen 1）、SM8550（8 Gen 2）都能识
 
 安装包、源码快照、版本号、校验值和每个版本的改动都在 [Releases](https://github.com/PrimaluxTeaers/SimpleAudioConverter/releases)。这份说明只写软件本身，不再重复发行内容。
 
-Android 版只提供 `arm64-v8a`。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。Windows 版由另一侧构建，只支持 Windows 10 / 11 x64。
+Android 版只提供 `arm64-v8a`，安装包命名 `Timbre-AndroidARM64-v8a.apk`。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。Windows 版由另一侧构建，只支持 Windows 10 / 11 x64。
 
 ## 接着改
 
@@ -101,7 +101,7 @@ MPL-2.0，见 [LICENSE](LICENSE)。署名和第三方许可见 [THIRD_PARTY.md](
 
 # Timbre
 
-An Android audio converter. Pick a file, pick a format, press convert. When you import a video, only the audio track changes; the picture stays untouched.
+An Android audio converter. Pick a file, pick a format, press convert. When you import a video, only the audio track changes; the picture stays untouched. 1.6 is the new baseline; releases and documentation from 1.5 and earlier were removed.
 
 This is a fork of [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter). The foundation, Android project, file picker and share entry come from upstream, which uses MPL-2.0; this repository keeps that license.
 
@@ -119,11 +119,11 @@ Batch conversion, stop confirmation, one-tap fallback from hardware to software 
 
 ## Video import
 
-Video files can be added like audio. Timbre processes the first audio track and copies the video stream without re-encoding, so the picture, resolution, frame rate and HDR metadata stay as they were.
+Video files can be added like audio. Timbre copies the video stream without re-encoding, so the picture, resolution, frame rate and HDR metadata stay as they were. Every audio track is preserved and re-encoded to the target format; the original per-track codecs are not kept.
 
 The output container follows the codec pair: H.264 / H.265 / AV1 / MPEG-4 video with M4A / AAC / MP3 / ALAC audio goes to MP4; other combinations go to MKV. Audio-only exports stay plain audio files and do not get a video wrapper.
 
-This path only replaces the audio track. Use Reencode when the picture itself needs work. Reencode's merge page can also put an external audio track back into a video.
+This path only replaces the audio. Use Reencode when the picture itself needs work. Reencode's merge page can also put an external audio track back into a video.
 
 ## Android behaviour
 
