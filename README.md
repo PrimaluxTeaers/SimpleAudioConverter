@@ -1,10 +1,14 @@
-# Timbre
+# Timbre / 音频转换
 
 Android 音频转换器。选文件、选格式、点转换，没有别的活。导入视频时只改音轨，画面原样保留。1.6 是新基线，1.5 及更早的发布记录和旧文档入口已清理。
 
+## 关于这个项目
+
+Timbre / 音频转换 是免费开源的离线工具，任何人都可以免费使用、修改、分发和自行构建，只要遵守 MPL-2.0 并保留上游署名。也完全允许其他人基于它做同类软件或另起分支；比起复制一个成品，更希望这套代码能让人自己搭出能用的版本。底座来自 SimpleAudioConverter，另外拼上了本项目的界面、转换链路和打包流程；作者本人也是被“找不到能用的音频工具、专业软件又太贵”困住的人。测试设备有限，遇到 bug 请见谅，也欢迎提交问题。没有把 Reencode 和 Timbre 合并成一个大型项目的打算，两个都只是小工具；更新完全随缘，能走到 1.6 靠的是想把它们做完整一点的心。
+
 这是 [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter) 的二次开发版。底座、Android 工程、文件选择和分享入口来自上游，原项目用 MPL-2.0，这个仓库也照样。
 
-Android 版只提供 arm64-v8a，应用名显示为 **Timbre 64 位**，安装包命名 `Timbre-AndroidARM64-v8a.apk`。Windows 版另行构建，名称为 **Timbre x86-64**，安装包命名 `Timbre-WindowsX86-64`，只支持 Windows 10 / 11 x64。
+Android 版只提供 arm64-v8a，应用名显示为 **Timbre 64 位**，安装包命名 `Timbre-AndroidARM64-v8a.apk`。Windows 版随 1.6 一起构建，名称为 **Timbre x86-64**，安装包命名 `Timbre-WindowsX86-64`，只支持 Windows 10 / 11 x64；和 Android APK 放在同一个 v1.6.0 发行版。
 
 ## 能做什么
 
@@ -99,13 +103,17 @@ MPL-2.0，见 [LICENSE](LICENSE)。署名和第三方许可见 [THIRD_PARTY.md](
 
 ---
 
-# Timbre
+# Timbre / Audio Converter
 
 An Android audio converter. Pick a file, pick a format, press convert. When you import a video, only the audio track changes; the picture stays untouched. 1.6 is the new baseline; releases and documentation from 1.5 and earlier were removed.
 
+## About
+
+Timbre / Audio Converter is a free, open-source offline tool. Anyone may use, modify, redistribute and build it, provided the MPL-2.0 license and upstream attribution are respected. Other people are free to make similar apps or fork this one; the point is not to ship one perfect binary, but to let people build their own working version. The foundation comes from SimpleAudioConverter, with this project's interface, conversion chain and packaging added on top. The author is one of the people who could not find a usable audio tool and could not afford professional software. Testing has been limited to a small set of devices, so bugs are possible; reports are welcome. There is no plan to merge Reencode and Timbre into one large project. Both are small tools, updated irregularly; reaching 1.6 is simply the wish to make them a little more complete.
+
 This is a fork of [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter). The foundation, Android project, file picker and share entry come from upstream, which uses MPL-2.0; this repository keeps that license.
 
-The Android build ships arm64-v8a only and shows **Timbre 64-bit** as its name. The Windows build is produced separately as **Timbre x86-64** and supports Windows 10 / 11 x64 only.
+The Android build ships arm64-v8a only and shows **Timbre 64-bit** as its name. The Windows build targets Windows 10 / 11 x64 and is published in the same v1.6.0 release as the Android APK.
 
 ## What it does
 
@@ -167,7 +175,7 @@ Small windows and split screen are handled deliberately. Starting with Android 1
 
 Installers, source snapshots, version numbers, checksums and per-release changes live in [Releases](https://github.com/PrimaluxTeaers/SimpleAudioConverter/releases). This file covers the software itself and does not repeat release contents.
 
-The Android build ships `arm64-v8a` only. The package name stays `com.technicjelle.simple_audio_converter.zh`, so an update over an older install keeps its settings. The signing key has not changed. The Windows build is produced separately and supports Windows 10 / 11 x64 only.
+The Android build ships `arm64-v8a` only. The package name stays `com.technicjelle.simple_audio_converter.zh`, so an update over an older install keeps its settings. The signing key has not changed. The Windows build targets Windows 10 / 11 x64 and is published in the same v1.6.0 release as the Android APK.
 
 ## Contributing
 
