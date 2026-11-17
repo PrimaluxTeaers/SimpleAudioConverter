@@ -57,7 +57,7 @@ class TimbreApp extends StatelessWidget {
       valueListenable: appSeed,
       builder: (BuildContext context, Color seed, _) {
         return MaterialApp(
-          title: "Timbre",
+          title: "Timbre 64 位",
           debugShowCheckedModeBanner: false,
           theme: buildAppTheme(Brightness.light, seed),
           darkTheme: buildAppTheme(Brightness.dark, seed),
@@ -140,7 +140,10 @@ class _HomePageState extends State<HomePage> {
   bool _converting = false;
   bool _publishing = false;
   bool _finished = false;
-  Timer? _finishTimer;
+  bool _showFinishedBar = false;
+  bool _resultsExpanded = true;
+  Timer? _finishBarTimer;
+  Timer? _resultsTimer;
   int _activeIndex = 0;
   double _activeProgress = 0;
   List<ConvertOutcome> _results = const [];
@@ -171,7 +174,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _finishTimer?.cancel();
+    _finishBarTimer?.cancel();
+    _resultsTimer?.cancel();
     S.revision.removeListener(_onLanguageChanged);
     _bitrateController.dispose();
     super.dispose();
@@ -237,6 +241,7 @@ class _HomePageState extends State<HomePage> {
       }
       setState(() {
         _finished = false;
+        _showFinishedBar = false;
         _results = const [];
       });
     } catch (e) {
@@ -320,9 +325,13 @@ class _HomePageState extends State<HomePage> {
     if (_files.isEmpty || _converting) return;
     if (_outputDir == null) await _prepareDir();
     HapticFeedback.mediumImpact();
+    _finishBarTimer?.cancel();
+    _resultsTimer?.cancel();
     setState(() {
       _converting = true;
       _finished = false;
+      _showFinishedBar = false;
+      _resultsExpanded = true;
       _results = const [];
       _activeIndex = 0;
       _activeProgress = 0;
@@ -368,11 +377,12 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
     HapticFeedback.lightImpact();
-    _finishTimer?.cancel();
     setState(() {
       _converting = false;
       _publishing = false;
       _finished = true;
+      _showFinishedBar = true;
+      _resultsExpanded = true;
       _results = results;
       _files.removeWhere(
         (entry) => results.any(
@@ -380,12 +390,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     });
-    _finishTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && !_converting && !_publishing) {
-        setState(() => _finished = false);
-      }
-    });
-
+    _scheduleFinishedUi();
     final bool hardwareFailed =
         _settings.hardwareDecode &&
         results.any((ConvertOutcome r) => !r.ok && _looksLikeHardwareFailure(r));
@@ -394,6 +399,24 @@ class _HomePageState extends State<HomePage> {
     } else if (results.isNotEmpty && results.every((ConvertOutcome r) => !r.ok)) {
       await _showAllFailed();
     }
+  }
+
+  void _scheduleFinishedUi() {
+    _finishBarTimer?.cancel();
+    _resultsTimer?.cancel();
+    _finishBarTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      setState(() => _showFinishedBar = false);
+    });
+    _resultsTimer = Timer(const Duration(seconds: 9), () {
+      if (!mounted) return;
+      setState(() => _resultsExpanded = false);
+    });
+  }
+
+  void _collapseResults() {
+    _resultsTimer?.cancel();
+    if (_resultsExpanded) setState(() => _resultsExpanded = false);
   }
 
   Future<List<ConvertOutcome>> _publishResults(
@@ -594,7 +617,24 @@ class _HomePageState extends State<HomePage> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 640),
-                    child: _bottomBar(),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 240),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (Widget child, Animation<double> animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 0.12),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _bottomBar(),
+                    ),
                   ),
                 ),
               ),
@@ -612,7 +652,7 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           expandedHeight: 128,
-          title: const Text("Timbre"),
+          title: const Text("Timbre 64 位"),
           actions: [
             if (_files.isNotEmpty && !_converting)
               IconButton(
@@ -644,7 +684,13 @@ class _HomePageState extends State<HomePage> {
             delegate: SliverChildListDelegate([
               _heroCard(),
               const SizedBox(height: 20),
-              if (_results.isNotEmpty) _resultsCard(),
+              if (_results.isNotEmpty)
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 260),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: _resultsExpanded ? _resultsCard() : _resultsSummaryCard(),
+                ),
               _sectionTitle(
                 index: "01",
                 S.t("Files", "文件"),
@@ -931,8 +977,8 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 4),
           Text(
             S.t(
-              "Audio and video files are both fine — audio will be extracted.",
-              "音频和视频文件都行，视频会自动抽出音轨。",
+              "Audio and video files both work. Video keeps its picture; only the audio track is replaced.",
+              "音频和视频文件都行。视频会保留画面，只替换音轨。",
             ),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2383,8 +2429,16 @@ class _HomePageState extends State<HomePage> {
 
   Widget _bottomBar() {
     final ColorScheme scheme = Theme.of(context).colorScheme;
+    final String barKey = _publishing
+        ? "publishing"
+        : _converting
+        ? "converting"
+        : _finished && _showFinishedBar && _results.isNotEmpty
+        ? "done"
+        : "idle";
     final bool allSaved =
         _finished &&
+        _showFinishedBar &&
         _results.isNotEmpty &&
         _results.any((ConvertOutcome r) => r.ok) &&
         _outputTarget != null &&
@@ -2403,6 +2457,7 @@ class _HomePageState extends State<HomePage> {
         : "${_files.length} × ${_settings.format.label}${_settings.format.lossless ? "" : (_settings.vbr && _settings.format.hasVbr ? " · VBR" : " · ${_settings.bitrate} kbps")}";
 
     return ClipRRect(
+      key: ValueKey<String>(barKey),
       borderRadius: BorderRadius.circular(32),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
@@ -2432,7 +2487,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       _publishing
                           ? S.t("Saving to the folder…", "正在存到文件夹…")
-                          : _finished && _results.isNotEmpty
+                          : _finished && _showFinishedBar && _results.isNotEmpty
                           ? (allSaved ? S.t("Done", "已完成") : S.t("Done", "转换完成"))
                           : summary,
                       maxLines: 1,
@@ -2468,7 +2523,7 @@ class _HomePageState extends State<HomePage> {
                   icon: const Icon(Icons.stop_rounded),
                   tooltip: S.t("Stop", "停止"),
                 )
-              else if (_finished && _results.isNotEmpty)
+              else if (_finished && _showFinishedBar && _results.isNotEmpty)
                 allSaved
                     ? Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -2506,9 +2561,51 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _resultsSummaryCard() {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: const ValueKey<String>("results-collapsed"),
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Material(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () {
+            _resultsTimer?.cancel();
+            setState(() => _resultsExpanded = true);
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 13, 14, 13),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: scheme.primary),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    S.t(
+                      "${_results.length} result(s) · saved",
+                      "${_results.length} 个结果 · 已保存",
+                    ),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _resultsCard() {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
+      key: const ValueKey<String>("results-expanded"),
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -2518,15 +2615,28 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: scheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                S.t("Results", "转换结果"),
-                style: Theme.of(context).textTheme.titleMedium,
+          InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: _collapseResults,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: scheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      S.t("Results", "转换结果"),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  Icon(
+                    Icons.keyboard_arrow_up_rounded,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 12),
           ..._results.asMap().entries.map((entry) {

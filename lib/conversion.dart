@@ -679,9 +679,24 @@ String _codecArgs(AudioFormat f, ConversionSettings s) {
 
 /// Builds the ffmpeg command for one file.
 ///
-/// Only the first audio stream is mapped and video/cover-art streams are
-/// dropped (`-vn`), which is what keeps players from latching onto a cover
-/// image as a "video" track and playing silence.
+/// Video import maps every audio stream and copies the video stream; pure
+/// audio conversion maps the first audio stream only and drops video/cover-art
+/// streams (`-vn`), which keeps players from latching onto a cover image as a
+/// "video" track and playing silence.
+String videoOutputExtension({
+  required bool hasVideo,
+  required AudioFormat format,
+  required String videoCodec,
+}) {
+  if (!hasVideo) return format.ext;
+  const Set<String> mp4Video = <String>{"h264", "hevc", "mpeg4", "av1"};
+  const Set<String> mp4Audio = <String>{"m4a", "aac", "mp3", "alac"};
+  if (mp4Video.contains(videoCodec) && mp4Audio.contains(format.id)) {
+    return "mp4";
+  }
+  return "mkv";
+}
+
 String buildConvertCommand({
   required String inputUrl,
   required String outputPath,
@@ -692,9 +707,6 @@ String buildConvertCommand({
   final AudioFormat f = settings.format;
   final StringBuffer b = StringBuffer();
   b.write("-hide_banner -y ");
-  if (settings.hardwareDecode && hasVideo) {
-    b.write("-hwaccel mediacodec ");
-  }
   b.write('-i "$inputUrl" ');
   final List<String> filters = <String>[];
   if (rnnModel != null) {
@@ -711,7 +723,11 @@ String buildConvertCommand({
   if (filters.isNotEmpty) {
     b.write('-filter:a "${filters.join(",")}" ');
   }
-  b.write("-map 0:a:0 -vn -map_metadata 0 -map_chapters -1 ");
+  if (hasVideo) {
+    b.write("-map 0:v:0 -map 0:a -c:v copy -map_metadata 0 -map_chapters 0 ");
+  } else {
+    b.write("-map 0:a:0 -vn -map_metadata 0 -map_chapters -1 ");
+  }
   final int sampleRate = settings.variant?.sampleRate ?? settings.sampleRate;
   if (sampleRate > 0 && !f.id.startsWith("amr")) {
     b.write("-ar $sampleRate ");

@@ -6,7 +6,7 @@ import "l10n.dart";
 import "output_store.dart";
 import "theme.dart";
 
-const String kAppVersion = "1.5.0";
+const String kAppVersion = "1.6.0";
 
 /// Settings that do not belong in the conversion sheet: interface language,
 /// the folder results are written to, and the accent colour.

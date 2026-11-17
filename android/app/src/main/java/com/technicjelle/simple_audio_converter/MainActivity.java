@@ -1,10 +1,12 @@
 package com.technicjelle.simple_audio_converter;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -37,7 +39,9 @@ import io.flutter.plugin.common.MethodChannel;
 public class MainActivity extends FlutterActivity {
 	private static final String CHANNEL = "audio_converter/device";
 	private static final String OUTPUT_CHANNEL = "timbre/output";
+	private static final String PROGRESS_CHANNEL = "timbre/progress";
 	private static final int REQUEST_OUTPUT_TREE = 0x544D;
+	private static final int REQUEST_NOTIFICATIONS = 0x544E;
 	private static final String OUTPUT_PREFS = "timbre_output";
 	private static final String KEY_TREE_URI = "tree_uri";
 	private static final String KEY_TREE_NAME = "tree_name";
@@ -80,6 +84,50 @@ public class MainActivity extends FlutterActivity {
 						result.notImplemented();
 				}
 			});
+
+		new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), PROGRESS_CHANNEL)
+			.setMethodCallHandler((call, result) -> {
+				Map<?, ?> args = call.arguments instanceof Map ? (Map<?, ?>) call.arguments : null;
+				String title = stringArg(args, "title", "Timbre");
+				String text = stringArg(args, "text", "");
+				int progress = intArg(args, "progress", 0);
+				switch (call.method) {
+					case "start":
+						ensureNotificationPermission();
+						ProgressService.start(this, title, text);
+						result.success(true);
+						break;
+					case "update":
+						ProgressService.update(this, title, text, progress);
+						result.success(true);
+						break;
+					case "stop":
+						ProgressService.stop(this);
+						result.success(true);
+						break;
+					default:
+						result.notImplemented();
+				}
+			});
+	}
+
+	private String stringArg(Map<?, ?> args, String key, String fallback) {
+		if (args == null) return fallback;
+		Object value = args.get(key);
+		return value instanceof String ? (String) value : fallback;
+	}
+
+	private int intArg(Map<?, ?> args, String key, int fallback) {
+		if (args == null) return fallback;
+		Object value = args.get(key);
+		return value instanceof Number ? ((Number) value).intValue() : fallback;
+	}
+
+	private void ensureNotificationPermission() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return;
+		if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+			== PackageManager.PERMISSION_GRANTED) return;
+		requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATIONS);
 	}
 
 	private Map<String, Object> deviceInfo() {

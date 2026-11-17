@@ -50,6 +50,56 @@ void main() {
     expect(command.contains("volume="), isFalse);
   });
 
+  test("video input keeps the picture stream untouched", () {
+    final String command = buildConvertCommand(
+      inputUrl: "/tmp/in.mp4",
+      outputPath: "/tmp/out.mkv",
+      settings: settings(),
+      hasVideo: true,
+    );
+    expect(command.contains("-map 0:v:0 -map 0:a"), isTrue);
+    expect(command.contains("-c:v copy"), isTrue);
+    expect(command.contains("-vn"), isFalse);
+    expect(command.contains("-c:a libmp3lame"), isTrue);
+  });
+
+  test("video output container follows codec compatibility", () {
+    final ConversionSettings aac = settings()..formatId = "m4a";
+    expect(
+      videoOutputExtension(
+        hasVideo: true,
+        format: aac.format,
+        videoCodec: "h264",
+      ),
+      "mp4",
+    );
+    expect(
+      videoOutputExtension(
+        hasVideo: true,
+        format: settings().format,
+        videoCodec: "h264",
+      ),
+      "mp4",
+    );
+    final ConversionSettings ogg = settings()..formatId = "ogg";
+    expect(
+      videoOutputExtension(
+        hasVideo: true,
+        format: ogg.format,
+        videoCodec: "h264",
+      ),
+      "mkv",
+    );
+    expect(
+      videoOutputExtension(
+        hasVideo: false,
+        format: settings().format,
+        videoCodec: "h264",
+      ),
+      "mp3",
+    );
+  });
+
   test("MP3 2.5 clamps bitrate to 64 kbps", () {
     final ConversionSettings s = settings()..bitrate = 320;
     s.selectVariant("mpeg25");
