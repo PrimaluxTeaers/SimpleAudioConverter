@@ -1,5 +1,31 @@
 # 改动清单
 
+## 1.5.0 重做（2026-11-17）
+
+### 中文
+
+版本号仍是 1.5.0；上一轮 1.5 的 Release、标签和资产已从仓库撤下，等这一轮改完再重新构建、重新发布。1.3.3 等旧发布记录保持不动。
+
+- 视频导入改成保留画面：只重编码或替换第一条音轨，视频流直接复制，画面、分辨率、帧率、HDR 信息不动。
+- 视频输出容器按编码组合选：H.264 / H.265 / AV1 / MPEG-4 加 M4A / AAC / MP3 / ALAC 用 MP4，其余组合用 MKV。只导出音频时仍是普通音频文件。
+- Android 前台服务通知显示当前文件和整体进度，退到后台不再静默中断。
+- 完成条显示约 5 秒后自动收起，结果卡片约 9 秒后收成一行摘要；点结果卡可以立刻收起 / 展开。底部栏、按钮和页面切换补过渡动画。
+- 应用名改为 `Timbre 64 位`，Windows 版为 `Timbre x86-64`。
+- README 改为中英上下对照，去掉独立的 `README.en.md` 跳转。
+
+### English
+
+The version stays 1.5.0. The previous 1.5 releases, tags and assets were removed from the repository so this round can be rebuilt and republished. Older releases such as 1.3.3 remain untouched.
+
+- Video import now keeps the picture: only the first audio track is re-encoded or replaced, while the video stream is copied and keeps its resolution, frame rate and HDR metadata.
+- The video output container follows the codec pair: H.264 / H.265 / AV1 / MPEG-4 with M4A / AAC / MP3 / ALAC goes to MP4; other combinations go to MKV. Audio-only exports remain plain audio files.
+- An Android foreground-service notification shows the current file and overall progress, so leaving the app no longer silently kills the job.
+- The completion bar hides itself after about five seconds and the results card collapses into a one-line summary after about nine seconds. Tapping the card collapses or expands it immediately. The bottom bar, buttons and page changes use transitions.
+- The app name is now `Timbre 64 位`; the Windows build is `Timbre x86-64`.
+- README is now a Chinese/English pair in one file, with no separate `README.en.md` jump.
+
+---
+
 ## 1.5.0（当前版本，2026-11-16）
 
 ### 中文
