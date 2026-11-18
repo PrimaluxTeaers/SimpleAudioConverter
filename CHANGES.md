@@ -16,7 +16,7 @@
 - 音频多轨：视频导入会保留全部音轨并逐条重编码；纯音频转码只处理第一条音轨。
 - 应用图标换成用户提供的深青底、薄荷青双向圆环与白色音符；自适应前景、启动器图标、README 图标使用同一张原图。
 - 主题、语言、输出目录持久化保持原行为；界面过渡、窄屏和小窗排版沿用 1.5 收口后的实现。
-- Windows 1.6 由 GitHub Actions 的 Windows x64 runner 构建，产物为 `Timbre-WindowsX86-64-1.6.0.zip`；音频编码仍走包内 FFmpeg，不做 GPU 编码声明。
+- 官方平台范围收窄到 Android：Windows 构建认真尝试过，受限于设备和验证条件，最终放弃；不再发布 Windows 包，仓库保留共享逻辑供他人自行适配。
 - arm64 APK 43,758,525 字节，SHA-256 `45e85a94e33bb1e36d6a5d1d8e477d24b7539d0729ed7763e69712152e88af4c`。
 
 ### English
@@ -33,5 +33,5 @@
 - Multiple audio tracks: video import preserves and re-encodes every audio track; pure audio conversion handles the first track only.
 - The launcher icon now uses the supplied deep-teal artwork with mint bidirectional rings and a white note; adaptive foreground, launcher icons and README artwork share the same source.
 - Theme, language and output-folder persistence are unchanged; transitions and narrow-window layout follow the 1.5 close-out implementation.
-- Windows 1.6 is built on GitHub Actions' Windows x64 runner as `Timbre-WindowsX86-64-1.6.0.zip`; audio encoding stays on the bundled FFmpeg and no GPU encoding is claimed.
+- Official platform support is Android only. The Windows build was attempted in earnest and dropped because the devices and verification conditions were not available; no Windows package is published, and the shared logic stays in the repository for others to adapt.
 - The arm64 APK is 43,758,525 bytes, SHA-256 `45e85a94e33bb1e36d6a5d1d8e477d24b7539d0729ed7763e69712152e88af4c`.

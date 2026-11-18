@@ -4,11 +4,11 @@ Android 音频转换器。选文件、选格式、点转换，没有别的活。
 
 ## 关于这个项目
 
-Timbre / 音频转换 是免费开源的离线工具，任何人都可以免费使用、修改、分发和自行构建，只要遵守 MPL-2.0 并保留上游署名。也完全允许其他人基于它做同类软件或另起分支；比起复制一个成品，更希望这套代码能让人自己搭出能用的版本。底座来自 SimpleAudioConverter，另外拼上了本项目的界面、转换链路和打包流程；作者本人也是被“找不到能用的音频工具、专业软件又太贵”困住的人。测试设备有限，遇到 bug 请见谅，也欢迎提交问题。没有把 Reencode 和 Timbre 合并成一个大型项目的打算，两个都只是小工具；更新完全随缘，能走到 1.6 靠的是想把它们做完整一点的心。
+Timbre / 音频转换 是免费开源的离线工具，任何人都可以免费使用、修改、分发和自行构建，只要遵守 MPL-2.0 并保留上游署名。也完全允许其他人基于它做同类软件或另起分支；比起复制一个成品，更希望这套代码能让人自己搭出能用的版本。底座来自 SimpleAudioConverter，另外拼上了本项目的界面、转换链路和打包流程；作者本人也是被“找不到能用的音频工具、专业软件又太贵”困住的人。测试设备有限，遇到 bug 请见谅，也欢迎提交问题。没有把 Reencode 和 Timbre 合并成一个大型项目的打算，两个都只是小工具；更新完全随缘，能走到 1.6 靠的是想把它们做完整一点的心。曾经认真尝试过 Windows 构建，受限于设备和实际条件，最终放弃；与其发一个自己无法验证的包，不如把边界说清楚。
 
 这是 [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter) 的二次开发版。底座、Android 工程、文件选择和分享入口来自上游，原项目用 MPL-2.0，这个仓库也照样。
 
-Android 版只提供 arm64-v8a，应用名显示为 **Timbre**，安装包文件名保留 `ARM64-v8a` 标识，包名 `com.technicjelle.simple_audio_converter.zh`。Windows 版随 1.6 一起构建，应用名和窗口标题为 **Timbre**，安装包命名 `Timbre-WindowsX86-64`，只支持 Windows 10 / 11 x64；Windows 和 Android 共用本仓库同一套 Flutter 源码，Windows runner 在 CI 生成并打包，和 Android APK 放在同一个 v1.6.0 发行版。
+Android 版只提供 arm64-v8a，应用名显示为 **Timbre**，安装包文件名保留 `ARM64-v8a` 标识，包名 `com.technicjelle.simple_audio_converter.zh`。官方只发布 Android 版，不再构建、不再发布 Windows 包。仓库保留不依赖 Android 界面的 Flutter / Dart 逻辑，熟悉 Windows 构建的人可以自行生成 runner、补平台层并适配；这条路由第三方自行维护，官方不提供成品，也不为适配结果背书。
 
 ## 能做什么
 
@@ -70,7 +70,7 @@ SM8450（骁龙 8 Gen 1）、SM8475（8+ Gen 1）、SM8550（8 Gen 2）都能识
 
 安装包、源码快照、版本号、校验值和每个版本的改动都在 [Releases](https://github.com/PrimaluxTeaers/SimpleAudioConverter/releases)。这份说明只写软件本身，不再重复发行内容。
 
-Android 版只提供 `arm64-v8a`，应用名显示为 `Timbre`，安装包文件名保留 `ARM64-v8a` 标识。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。Windows 版和 Android 共用本仓库的 Flutter 源码，由 GitHub Actions 的 `windows-latest` runner 生成 runner 并打包，只支持 Windows 10 / 11 x64。
+Android 版只提供 `arm64-v8a`，应用名显示为 `Timbre`，安装包文件名保留 `ARM64-v8a` 标识。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。官方不再提供 Windows 构建；仓库保留共享逻辑，供有 Windows 环境的人自行适配，官方不维护、不发布，也不为第三方构建背书。
 
 ## 接着改
 
@@ -97,7 +97,7 @@ Flutter 3.50 / Dart 3.14，JDK 17，Android SDK 36，build-tools 36.0.0，NDK 28
 
 `flutter analyze` 没有 error。`flutter test` 覆盖切格式、设置页、窄屏分屏、长按详情、滑块微调、MP3 版本选择、格式说明展开、音量与响度面板、处理器识别映射，以及视频音轨替换命令。构建环境没有 Android 模拟器，真机转码和系统文件夹写入仍然没跑过。
 
-`lib/main.dart` 是界面、队列和设置入口；`lib/conversion.dart` 放格式表、码率范围与 FFmpeg 命令；`lib/output_store.dart` 管输出目录和 Android SAF；`lib/settings.dart` 管偏好与权限说明；`lib/runtime_settings.dart` 管后台驻留和震动。Windows 与 Android 共用这些 `lib/` 文件；`windows/` runner 由 CI 用 `flutter create` 生成，不提交生成物，仓库里也没有闭源桌面模块。
+`lib/main.dart` 是界面、队列和设置入口；`lib/conversion.dart` 放格式表、码率范围与 FFmpeg 命令；`lib/output_store.dart` 管输出目录和 Android SAF；`lib/settings.dart` 管偏好与权限说明；`lib/runtime_settings.dart` 管后台驻留和震动。这些 `lib/` 文件不绑定 Android 界面，保留给愿意自行做 Windows 或其他桌面适配的人；官方不生成、不提交也不维护 Windows runner，仓库里也没有闭源桌面模块。
 
 ## 许可
 
@@ -111,11 +111,11 @@ An Android audio converter. Pick a file, pick a format, press convert. When you 
 
 ## About
 
-Timbre / Audio Converter is a free, open-source offline tool. Anyone may use, modify, redistribute and build it, provided the MPL-2.0 license and upstream attribution are respected. Other people are free to make similar apps or fork this one; the point is not to ship one perfect binary, but to let people build their own working version. The foundation comes from SimpleAudioConverter, with this project's interface, conversion chain and packaging added on top. The author is one of the people who could not find a usable audio tool and could not afford professional software. Testing has been limited to a small set of devices, so bugs are possible; reports are welcome. There is no plan to merge Reencode and Timbre into one large project. Both are small tools, updated irregularly; reaching 1.6 is simply the wish to make them a little more complete.
+Timbre / Audio Converter is a free, open-source offline tool. Anyone may use, modify, redistribute and build it, provided the MPL-2.0 license and upstream attribution are respected. Other people are free to make similar apps or fork this one; the point is not to ship one perfect binary, but to let people build their own working version. The foundation comes from SimpleAudioConverter, with this project's interface, conversion chain and packaging added on top. The author is one of the people who could not find a usable audio tool and could not afford professional software. Testing has been limited to a small set of devices, so bugs are possible; reports are welcome. There is no plan to merge Reencode and Timbre into one large project. Both are small tools, updated irregularly; reaching 1.6 is simply the wish to make them a little more complete. A Windows build was attempted in earnest, but without the devices and verification conditions to stand behind it, it was abandoned; saying so is better than shipping an untested package.
 
 This is a fork of [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter). The foundation, Android project, file picker and share entry come from upstream, which uses MPL-2.0; this repository keeps that license.
 
-The Android build ships arm64-v8a only and shows **Timbre** as its name; the installer filename keeps the `ARM64-v8a` tag. Windows shares the same Flutter source, targets Windows 10 / 11 x64, and is published in the same v1.6.0 release as the Android APK.
+The Android build ships arm64-v8a only and shows **Timbre** as its name; the installer filename keeps the `ARM64-v8a` tag. Android is the only official target. The Windows build has been dropped: no Windows package is built or published. The repository keeps the Flutter / Dart logic that does not depend on the Android UI, so anyone with Windows build experience can generate a runner, fill in the platform layer and adapt it; that path is maintained by whoever builds it, not by this project, and the project does not endorse third-party builds.
 
 ## What it does
 
@@ -177,7 +177,7 @@ Small windows and split screen are handled deliberately. Starting with Android 1
 
 Installers, source snapshots, version numbers, checksums and per-release changes live in [Releases](https://github.com/PrimaluxTeaers/SimpleAudioConverter/releases). This file covers the software itself and does not repeat release contents.
 
-The Android build ships `arm64-v8a` only, shows `Timbre` as its name and keeps the `ARM64-v8a` tag in the installer filename. The package name stays `com.technicjelle.simple_audio_converter.zh`, so an update over an older install keeps its settings. The signing key has not changed. Windows shares the same Flutter source in this repository; the `windows-latest` workflow generates the runner and packs the zip, and both builds target Windows 10 / 11 x64 only.
+The Android build ships `arm64-v8a` only, shows `Timbre` as its name and keeps the `ARM64-v8a` tag in the installer filename. The package name stays `com.technicjelle.simple_audio_converter.zh`, so an update over an older install keeps its settings. The signing key has not changed. No Windows build is provided; the shared logic stays in the repository for anyone with a Windows environment to adapt, and the project does not maintain, publish or endorse third-party builds.
 
 ## Contributing
 

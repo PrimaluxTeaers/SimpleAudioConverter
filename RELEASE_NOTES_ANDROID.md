@@ -39,3 +39,11 @@ SHA-256: `45e85a94e33bb1e36d6a5d1d8e477d24b7539d0729ed7763e69712152e88af4c`; 43,
 - Theme, language and output-folder persistence apply immediately; narrow-window, small-window and tablet layout and transitions are unchanged.
 
 Known limits: pure audio conversion handles the first audio track only; multiple tracks from a video are all re-encoded to the target codec, so the original per-track codecs are not kept. Physical-device conversion and system folder writes have not been verified in this round.
+
+## 平台支持
+
+官方只发布 Android arm64-v8a。Windows 构建已经放弃：曾经认真尝试过，受限于设备和验证条件，最终没有继续。仓库保留共享的 Flutter / Dart 逻辑，熟悉 Windows 构建的人可以自行生成 runner 并适配；官方不提供成品、不维护，也不为第三方构建背书。
+
+## Platform support
+
+Android arm64-v8a is the only official build. The Windows build was attempted in earnest and then dropped because the devices and verification conditions were not there. The shared Flutter / Dart logic stays in the repository so someone with Windows build experience can generate a runner and adapt it; the project does not ship, maintain or endorse third-party builds.
