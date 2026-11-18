@@ -22,12 +22,15 @@ import "conversion.dart";
 import "convert_engine.dart";
 import "dialogs.dart";
 import "device_info.dart";
+import "font_manager.dart";
+import "haptics.dart";
 import "l10n.dart";
 import "media_information_view.dart";
 import "output_store.dart";
 import "page_route.dart";
 import "path.dart";
 import "picked_file_info.dart";
+import "runtime_settings.dart";
 import "settings.dart";
 import "theme.dart";
 import "utils.dart";
@@ -39,6 +42,9 @@ final ValueNotifier<Color> appSeed = ValueNotifier<Color>(kDefaultSeed);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  await Haptics.load();
+  await RuntimeSettings.load();
+  await FontManager.load();
   await S.load();
   try {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -56,13 +62,26 @@ class TimbreApp extends StatelessWidget {
     return ValueListenableBuilder<Color>(
       valueListenable: appSeed,
       builder: (BuildContext context, Color seed, _) {
-        return MaterialApp(
-          title: "Timbre 64 位",
-          debugShowCheckedModeBanner: false,
-          theme: buildAppTheme(Brightness.light, seed),
-          darkTheme: buildAppTheme(Brightness.dark, seed),
-          themeMode: ThemeMode.system,
-          home: const HomePage(),
+        return AnimatedBuilder(
+          animation: FontManager.revision,
+          builder: (BuildContext context, _) {
+            return MaterialApp(
+              title: "Timbre",
+              debugShowCheckedModeBanner: false,
+              theme: buildAppTheme(
+                Brightness.light,
+                seed,
+                fontFamily: FontManager.family,
+              ),
+              darkTheme: buildAppTheme(
+                Brightness.dark,
+                seed,
+                fontFamily: FontManager.family,
+              ),
+              themeMode: ThemeMode.system,
+              home: const HomePage(),
+            );
+          },
         );
       },
     );
@@ -133,6 +152,7 @@ class _HomePageState extends State<HomePage> {
   final ConversionSettings _settings = ConversionSettings();
   final ConvertEngine _engine = ConvertEngine();
   final TextEditingController _bitrateController = TextEditingController();
+  final FocusNode _bitrateFocus = FocusNode();
 
   Directory? _outputDir;
   OutputTarget? _outputTarget;
@@ -158,6 +178,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _bitrateController.text = _settings.bitrate.toString();
+    _bitrateFocus.addListener(_onBitrateFocus);
     S.revision.addListener(_onLanguageChanged);
     _prepareDir();
     _loadOutputTarget();
@@ -177,8 +198,27 @@ class _HomePageState extends State<HomePage> {
     _finishBarTimer?.cancel();
     _resultsTimer?.cancel();
     S.revision.removeListener(_onLanguageChanged);
+    _bitrateFocus.removeListener(_onBitrateFocus);
+    _bitrateFocus.dispose();
     _bitrateController.dispose();
     super.dispose();
+  }
+
+  void _onBitrateFocus() {
+    if (!_bitrateFocus.hasFocus) _commitBitrateText();
+  }
+
+  void _commitBitrateText() {
+    final int? parsed = int.tryParse(_bitrateController.text.trim());
+    if (parsed == null) {
+      _bitrateController.text = _settings.bitrate.toString();
+      return;
+    }
+    setState(() {
+      _settings.bitrate = parsed;
+      _settings.clampToFormat();
+      _bitrateController.text = _settings.bitrate.toString();
+    });
   }
 
   void _onLanguageChanged() {
@@ -305,7 +345,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _removeFile(int index) {
-    HapticFeedback.selectionClick();
+    Haptics.selectionClick();
     setState(() {
       _files.removeAt(index);
       _finished = false;
@@ -324,7 +364,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _start() async {
     if (_files.isEmpty || _converting) return;
     if (_outputDir == null) await _prepareDir();
-    HapticFeedback.mediumImpact();
+    Haptics.mediumImpact();
     _finishBarTimer?.cancel();
     _resultsTimer?.cancel();
     setState(() {
@@ -341,6 +381,7 @@ class _HomePageState extends State<HomePage> {
       files: _files.map((e) => e.info).toList(),
       settings: _settings,
       outputDir: _outputDir!,
+      allowBackground: RuntimeSettings.backgroundMode,
       onProgress: (int i, double progress) {
         if (!mounted) return;
         setState(() {
@@ -376,7 +417,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (!mounted) return;
-    HapticFeedback.lightImpact();
+    Haptics.lightImpact();
     setState(() {
       _converting = false;
       _publishing = false;
@@ -490,7 +531,7 @@ class _HomePageState extends State<HomePage> {
         onSecondary: _showAllFormatsSheet,
         primaryLabel: S.t("Switch to software and retry", "改用软件再试一次"),
         onPrimary: () {
-          HapticFeedback.lightImpact();
+          Haptics.lightImpact();
           setState(() {
             _settings.hardwareDecode = false;
             _decodeMode = 1;
@@ -521,7 +562,7 @@ class _HomePageState extends State<HomePage> {
 
   void _removeResultAt(int index) {
     if (index < 0 || index >= _results.length) return;
-    HapticFeedback.selectionClick();
+    Haptics.selectionClick();
     setState(() => _results = <ConvertOutcome>[..._results]..removeAt(index));
   }
 
@@ -652,7 +693,7 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           expandedHeight: 128,
-          title: const Text("Timbre 64 位"),
+          title: const Text("Timbre"),
           actions: [
             if (_files.isNotEmpty && !_converting)
               IconButton(
@@ -765,7 +806,7 @@ class _HomePageState extends State<HomePage> {
               "Primary targets: Dimensity 9300 and newer (9300/9400/9500/9600, including Plus/Pro/S rebadges), the Dimensity 8400/8450/8500 family; Snapdragon 8 Gen 3 and newer (including 8s Gen 4). Other chips still convert on the CPU; hardware decode may not hold up.",
           "基于 TechnicJelle 的 SimpleAudioConverter 二次开发，非官方独立签名构建，与上游作者无关。\n\n"
               "源码遵循 MPL-2.0，本安装包以同一许可证分发。\n\n"
-              "仅 64 位 · arm64-v8a。针对 Android 15、16、17 构建；建议 Android 15 及以上，更低版本未验证。主要照顾原生 Android、澎湃/MIUI、ColorOS 和 OriginOS。\n\n"
+              "arm64-v8a 单架构。针对 Android 15、16、17 构建；建议 Android 15 及以上，更低版本未验证。主要照顾原生 Android、澎湃/MIUI、ColorOS 和 OriginOS。\n\n"
               "主要适配：天玑 9300 及以上（9300/9400/9500/9600，含 Plus/Pro/S 换皮），以及天玑 8400/8450/8500 系列；骁龙 8 第三代及以上（含 8s Gen 4）。其他芯片也能转，靠 CPU 软解，慢一点；硬解不一定稳。",
         ),
         primaryLabel: S.t("Close", "关闭"),
@@ -1177,7 +1218,7 @@ class _HomePageState extends State<HomePage> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: _filterChip(_categoryLabel(c), on, () {
-                    HapticFeedback.selectionClick();
+                    Haptics.selectionClick();
                     setState(() {
                       _category = c;
                       _activeGroupId = null;
@@ -1258,7 +1299,7 @@ class _HomePageState extends State<HomePage> {
             final bool selected = _settings.formatId == f.id;
             return GestureDetector(
               onTap: () {
-                HapticFeedback.selectionClick();
+                Haptics.selectionClick();
                 setState(() {
                   _settings.selectFormat(f.id);
                   _bitrateController.text = _settings.bitrate.toString();
@@ -1381,6 +1422,34 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Widget _formatTechRow(BuildContext ctx, String label, String value) {
+    final ColorScheme scheme = Theme.of(ctx).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 76,
+            child: Text(
+              label,
+              style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showFormatSheet(AudioFormat f) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     showModalBottomSheet<void>(
@@ -1427,24 +1496,53 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  S.t("WHAT IT'S FOR", "适合拿来做什么"),
-                  style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                    color: scheme.primary,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
                   S.t(f.summaryEn, f.summaryZh),
                   style: Theme.of(ctx).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+                Theme(
+                  data: Theme.of(ctx).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 6),
+                    title: Text(
+                      S.t("Technical details", "技术细节"),
+                      style: Theme.of(ctx).textTheme.titleSmall,
+                    ),
+                    subtitle: Text(
+                      S.t(
+                        "Codec, configuration, container and decoding",
+                        "编码、配置、容器、解码",
+                      ),
+                      style: Theme.of(ctx).textTheme.bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                    children: <Widget>[
+                      _formatTechRow(ctx, S.t("Codec", "编码"), f.codecName),
+                      _formatTechRow(
+                        ctx,
+                        S.t("Configuration", "配置"),
+                        _specsFor(f),
+                      ),
+                      _formatTechRow(
+                        ctx,
+                        S.t("Container", "容器"),
+                        f.containerName,
+                      ),
+                      _formatTechRow(
+                        ctx,
+                        S.t("Decoding", "解码"),
+                        S.t(f.decodeEn, f.decodeZh),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  S.t("TRADE-OFFS", "用起来的取舍"),
+                  S.t("Trade-offs", "取舍"),
                   style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
                     color: scheme.primary,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.0,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1617,6 +1715,27 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   style: Theme.of(ctx).textTheme.bodyMedium,
                                 ),
+                                const SizedBox(height: 10),
+                                _formatTechRow(
+                                  ctx,
+                                  S.t("Codec", "编码"),
+                                  f.codecName,
+                                ),
+                                _formatTechRow(
+                                  ctx,
+                                  S.t("Configuration", "配置"),
+                                  _specsFor(f),
+                                ),
+                                _formatTechRow(
+                                  ctx,
+                                  S.t("Container", "容器"),
+                                  f.containerName,
+                                ),
+                                _formatTechRow(
+                                  ctx,
+                                  S.t("Decoding", "解码"),
+                                  S.t(f.decodeEn, f.decodeZh),
+                                ),
                               ],
                             ),
                           ),
@@ -1661,7 +1780,7 @@ class _HomePageState extends State<HomePage> {
                   .map((FormatVariant v) => (v.id, S.t(v.labelEn, v.labelZh)))
                   .toList(),
               (String id) {
-                HapticFeedback.selectionClick();
+                Haptics.selectionClick();
                 setState(() {
                   _settings.selectVariant(id);
                   _bitrateController.text = _settings.bitrate.toString();
@@ -1886,7 +2005,7 @@ class _HomePageState extends State<HomePage> {
   /// handler, so tapping the already-selected chip flipped it to the other
   /// mode.
   void _setVbr(bool value) {
-    HapticFeedback.selectionClick();
+    Haptics.selectionClick();
     setState(() {
       _settings.vbr = value;
       if (_settings.format.hasCbr) {
@@ -1899,26 +2018,55 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  List<int> _bitrateStops(AudioFormat format) {
+    if (format.hasFixedSteps) {
+      return format.fixedKbps.map((double value) => value.round()).toList();
+    }
+    final int max = _settings.effectiveMaxKbps;
+    final Set<int> values = <int>{
+      format.minKbps,
+      max,
+      32,
+      48,
+      64,
+      80,
+      96,
+      112,
+      128,
+      160,
+      192,
+      224,
+      256,
+      320,
+      384,
+      448,
+      512,
+    };
+    return values
+        .where((int value) => value >= format.minKbps && value <= max)
+        .toList()
+      ..sort();
+  }
+
+  int _nearestStopIndex(List<int> stops, int value) {
+    int best = 0;
+    for (int i = 1; i < stops.length; i++) {
+      if ((stops[i] - value).abs() < (stops[best] - value).abs()) best = i;
+    }
+    return best;
+  }
+
   Widget _cbrControls(AudioFormat format) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    final bool fixed = format.hasFixedSteps;
+    final List<int> stops = _bitrateStops(format);
     final int value = _settings.bitrate;
-    final double sliderValue = fixed
-        ? _settings.fixedIndex.toDouble()
-        : value.toDouble();
-    final double sliderMin = fixed ? 0 : format.minKbps.toDouble();
-    final double sliderMax = fixed
-        ? (format.fixedKbps.length - 1).toDouble()
-        : format.maxKbps.toDouble();
+    final int current = value.clamp(format.minKbps, _settings.effectiveMaxKbps);
+    final int index = _nearestStopIndex(stops, current);
 
-    void setBitrate(double raw) {
+    void setSliderBitrate(double raw) {
+      final int nextIndex = raw.round().clamp(0, stops.length - 1);
       setState(() {
-        if (fixed) {
-          final int index = raw.round().clamp(0, format.fixedKbps.length - 1);
-          _settings.bitrate = format.fixedKbps[index].round();
-        } else {
-          _settings.bitrate = raw.round();
-        }
+        _settings.bitrate = stops[nextIndex];
         _bitrateController.text = _settings.bitrate.toString();
       });
     }
@@ -1935,7 +2083,7 @@ class _HomePageState extends State<HomePage> {
               curve: Curves.easeOutCubic,
               builder: (BuildContext context, double animated, _) {
                 return Text(
-                  fixed ? _settings.bitrate.toString() : animated.round().toString(),
+                  animated.round().toString(),
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     color: scheme.primary,
                     height: 1,
@@ -1955,49 +2103,63 @@ class _HomePageState extends State<HomePage> {
             ),
             const Spacer(),
             SizedBox(
-              width: 96,
+              width: 110,
               child: TextField(
                 controller: _bitrateController,
-                keyboardType: TextInputType.numberWithOptions(decimal: fixed),
+                focusNode: _bitrateFocus,
+                keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r"[0-9.]")),
+                textInputAction: TextInputAction.done,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(3),
                 ],
                 decoration: const InputDecoration(
                   isDense: true,
-                  suffixText: "k",
+                  suffixText: "kbps",
                 ),
-                onSubmitted: (String raw) {
-                  final double? parsed = double.tryParse(raw);
-                  if (parsed == null) return;
-                  setBitrate(parsed);
+                onSubmitted: (_) {
+                  _commitBitrateText();
+                  _bitrateFocus.unfocus();
                 },
               ),
             ),
           ],
         ),
         FineSlider(
-          value: sliderValue,
-          min: sliderMin,
-          max: sliderMax,
-          divisions: fixed ? format.fixedKbps.length - 1 : null,
-          onChanged: setBitrate,
-          valueLabel: fixed ? "${_settings.bitrate} kbps" : "${_settings.bitrate} kbps",
+          value: index.toDouble(),
+          min: 0,
+          max: (stops.length - 1).toDouble(),
+          divisions: stops.length - 1,
+          onChanged: setSliderBitrate,
+          valueLabel: "${stops[index]} kbps",
         ),
         Text(
-          fixed
+          format.hasFixedSteps
               ? S.t(
-                  "This codec only accepts ${format.fixedKbps.length} legal bitrates. Hold the slider to fine-tune, release to snap.",
-                  "这个编码只认 ${format.fixedKbps.length} 个合法码率。长按滑块可微调，松手自动吸附。",
+                  "This codec only accepts ${stops.length} legal bitrates. The slider snaps to each one; the number field clamps to the same list.",
+                  "这个编码只认 ${stops.length} 个合法码率。滑块只吸附到这些档位；数字框超出范围也会卡到最近的上限。",
                 )
               : S.t(
-                  "Any value between ${format.minKbps} and ${format.maxKbps} kbps. Long-press the slider for fine adjustment.",
-                  "可填 ${format.minKbps}–${format.maxKbps} 之间任意值。长按滑块可微调。",
+                  "Fixed stops: ${stops.join(" / ")} kbps. The slider snaps to these; the number field accepts any whole value from ${format.minKbps} to ${_settings.effectiveMaxKbps} and clamps out-of-range input.",
+                  "固定档：${stops.join(" / ")} kbps。滑块只吸附这些档；数字框可填 ${format.minKbps}–${_settings.effectiveMaxKbps} 的任意整数，超出范围自动卡到上下限。",
                 ),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: scheme.onSurfaceVariant,
           ),
         ),
+        if (format.hasFixedSteps) ...[
+          const SizedBox(height: 4),
+          Text(
+            S.t(
+              "Illegal values are not written to the command; the field snaps back to a legal rate.",
+              "非法码率不会写进命令；输入框会回到合法档位。",
+            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -2213,6 +2375,19 @@ class _HomePageState extends State<HomePage> {
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
+                    if (device != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        device.gpuKnown
+                            ? "${device.gpuLabel}${device.glEsVersion.isNotEmpty ? ' · GLES ${device.glEsVersion}' : ''}"
+                            : S.t("GPU not reported; CPU path only.", "GPU 未上报，只走 CPU 路径。"),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: device.gpuKnown
+                              ? scheme.primary
+                              : scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -2740,7 +2915,7 @@ class _FineSliderState extends State<FineSlider> {
             _width = width;
             _originX = details.localPosition.dx;
             _startValue = widget.value;
-            HapticFeedback.mediumImpact();
+            Haptics.mediumImpact();
             setState(() => _fine = true);
           },
           onLongPressMoveUpdate: (LongPressMoveUpdateDetails details) {

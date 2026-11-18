@@ -156,6 +156,17 @@ public class MainActivity extends FlutterActivity {
 		info.put("socModel", socModel());
 		info.put("socManufacturer", socManufacturer());
 
+		// GL renderer / EGL details. These are the primary GPU signal; the
+		// CPU/board fields below remain fallbacks for vendor ROMs that hide SoC.
+		Map<String, Object> gpuInfo = GpuProbe.read(this);
+		info.put("gpuRenderer", gpuInfo.get("renderer"));
+		info.put("gpuVendor", gpuInfo.get("vendor"));
+		info.put("gpuVersion", gpuInfo.get("version"));
+		info.put("eglVendor", gpuInfo.get("eglVendor"));
+		info.put("eglVersion", gpuInfo.get("eglVersion"));
+		info.put("glEsVersion", gpuInfo.get("glEsVersion"));
+		info.put("gpuSource", gpuInfo.get("source"));
+
 		// AOSP / Qualcomm / MediaTek board identifiers.
 		info.put("ro.board.platform", prop("ro.board.platform"));
 		info.put("ro.soc.model", prop("ro.soc.model"));

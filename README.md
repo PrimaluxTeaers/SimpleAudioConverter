@@ -8,13 +8,13 @@ Timbre / 音频转换 是免费开源的离线工具，任何人都可以免费�
 
 这是 [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter) 的二次开发版。底座、Android 工程、文件选择和分享入口来自上游，原项目用 MPL-2.0，这个仓库也照样。
 
-Android 版只提供 arm64-v8a，应用名显示为 **Timbre 64 位**，安装包命名 `Timbre-AndroidARM64-v8a.apk`。Windows 版随 1.6 一起构建，名称为 **Timbre x86-64**，安装包命名 `Timbre-WindowsX86-64`，只支持 Windows 10 / 11 x64；和 Android APK 放在同一个 v1.6.0 发行版。
+Android 版只提供 arm64-v8a，应用名显示为 **Timbre**，安装包文件名保留 `ARM64-v8a` 标识，包名 `com.technicjelle.simple_audio_converter.zh`。Windows 版随 1.6 一起构建，应用名和窗口标题为 **Timbre**，安装包命名 `Timbre-WindowsX86-64`，只支持 Windows 10 / 11 x64；Windows 和 Android 共用本仓库同一套 Flutter 源码，Windows runner 在 CI 生成并打包，和 Android APK 放在同一个 v1.6.0 发行版。
 
 ## 能做什么
 
 输出格式 18 种，分日常、无损、语音、老格式、其他五类。日常是 MP3、M4A、AAC、OGG、Opus；无损是 FLAC、WAV、AIFF、ALAC、CAF、AU、WavPack；语音是 AMR-NB、AMR-WB；老格式是 WMA、MP2、AC-3、E-AC-3。分组可以自己建，长按能删。
 
-MP3 可以选 MPEG-1、MPEG-2 和 MPEG-2.5。切版本后码率上限跟着变，12 kHz 的版本不会让你拖到 320 kbps。AMR 只有固定档位，滑块会吸附到合法码率。
+MP3 可以选 MPEG-1、MPEG-2 和 MPEG-2.5。切版本后码率上限跟着变，12 kHz 的版本不会让你拖到 320 kbps。码率滑块只吸附固定档位；右侧数字框可填当前格式范围内的任意整数，提交或失焦时自动卡到上下限。AMR 只有固定档位，数字框也会回到最近的合法档。
 
 码率下面有整体音量，范围 -12 到 +12 dB，0 dB 保持原样。正增益会自动限幅，避免削波。另一个开关是“统一整批响度”，适合一批文件里既有轻声录音又有正常成品的情况。开了它，音量滑块不参与。
 
@@ -70,11 +70,11 @@ SM8450（骁龙 8 Gen 1）、SM8475（8+ Gen 1）、SM8550（8 Gen 2）都能识
 
 安装包、源码快照、版本号、校验值和每个版本的改动都在 [Releases](https://github.com/PrimaluxTeaers/SimpleAudioConverter/releases)。这份说明只写软件本身，不再重复发行内容。
 
-Android 版只提供 `arm64-v8a`，安装包命名 `Timbre-AndroidARM64-v8a.apk`。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。Windows 版由另一侧构建，只支持 Windows 10 / 11 x64。
+Android 版只提供 `arm64-v8a`，应用名显示为 `Timbre`，安装包文件名保留 `ARM64-v8a` 标识。包名保持 `com.technicjelle.simple_audio_converter.zh`，从旧版覆盖安装不会丢设置。签名证书没有换。Windows 版和 Android 共用本仓库的 Flutter 源码，由 GitHub Actions 的 `windows-latest` runner 生成 runner 并打包，只支持 Windows 10 / 11 x64。
 
 ## 接着改
 
-仓库按 MPL-2.0 开放，欢迎接着做。改过的文件保留同一许可证、保留上游署名就行。要公开发修改版，建议换自己的包名和签名，别用 `com.technicjelle.simple_audio_converter.zh`，否则用户分不清是官方包还是你的包。开发过程中的取舍和踩坑记在 [DEVLOG.md](DEVLOG.md)，部分内容没有放出。
+仓库按 MPL-2.0 开放，欢迎接着做。改过的文件保留同一许可证、保留上游署名就行。要公开发修改版，建议换自己的包名和签名，别用 `com.technicjelle.simple_audio_converter.zh`，否则用户分不清是官方包还是你的包。开发过程中的取舍和踩坑记在 [DEVLOG.md](DEVLOG.md)。
 
 ## 用到的项目
 
@@ -97,6 +97,8 @@ Flutter 3.50 / Dart 3.14，JDK 17，Android SDK 36，build-tools 36.0.0，NDK 28
 
 `flutter analyze` 没有 error。`flutter test` 覆盖切格式、设置页、窄屏分屏、长按详情、滑块微调、MP3 版本选择、格式说明展开、音量与响度面板、处理器识别映射，以及视频音轨替换命令。构建环境没有 Android 模拟器，真机转码和系统文件夹写入仍然没跑过。
 
+`lib/main.dart` 是界面、队列和设置入口；`lib/conversion.dart` 放格式表、码率范围与 FFmpeg 命令；`lib/output_store.dart` 管输出目录和 Android SAF；`lib/settings.dart` 管偏好与权限说明；`lib/runtime_settings.dart` 管后台驻留和震动。Windows 与 Android 共用这些 `lib/` 文件；`windows/` runner 由 CI 用 `flutter create` 生成，不提交生成物，仓库里也没有闭源桌面模块。
+
 ## 许可
 
 MPL-2.0，见 [LICENSE](LICENSE)。署名和第三方许可见 [THIRD_PARTY.md](THIRD_PARTY.md)。
@@ -113,13 +115,13 @@ Timbre / Audio Converter is a free, open-source offline tool. Anyone may use, mo
 
 This is a fork of [TechnicJelle/SimpleAudioConverter](https://github.com/TechnicJelle/SimpleAudioConverter). The foundation, Android project, file picker and share entry come from upstream, which uses MPL-2.0; this repository keeps that license.
 
-The Android build ships arm64-v8a only and shows **Timbre 64-bit** as its name. The Windows build targets Windows 10 / 11 x64 and is published in the same v1.6.0 release as the Android APK.
+The Android build ships arm64-v8a only and shows **Timbre** as its name; the installer filename keeps the `ARM64-v8a` tag. Windows shares the same Flutter source, targets Windows 10 / 11 x64, and is published in the same v1.6.0 release as the Android APK.
 
 ## What it does
 
 Eighteen output formats, grouped into daily, lossless, voice, legacy and other. Daily: MP3, M4A, AAC, OGG, Opus. Lossless: FLAC, WAV, AIFF, ALAC, CAF, AU, WavPack. Voice: AMR-NB, AMR-WB. Legacy: WMA, MP2, AC-3, E-AC-3. Groups can be created and removed with a long press.
 
-MP3 offers MPEG-1, MPEG-2 and MPEG-2.5. Switching the version changes the bitrate ceiling, so the 12 kHz variant cannot be pushed to 320 kbps. AMR has fixed steps and the slider snaps to legal rates.
+MP3 offers MPEG-1, MPEG-2 and MPEG-2.5. Switching the version changes the bitrate ceiling, so the 12 kHz variant cannot be pushed to 320 kbps. The bitrate slider only snaps to fixed stops; the number field accepts any whole value inside the current format range, then clamps on submit or focus loss. AMR has fixed steps, and the field snaps back to the nearest legal rate.
 
 Below bitrate is an overall gain control from -12 to +12 dB, with 0 dB leaving the source alone. Positive gain adds a limiter to avoid clipping. The other switch is “match loudness across the batch”, useful when a queue mixes quiet recordings and finished masters. While it is on, the gain slider is not used.
 
@@ -175,7 +177,7 @@ Small windows and split screen are handled deliberately. Starting with Android 1
 
 Installers, source snapshots, version numbers, checksums and per-release changes live in [Releases](https://github.com/PrimaluxTeaers/SimpleAudioConverter/releases). This file covers the software itself and does not repeat release contents.
 
-The Android build ships `arm64-v8a` only. The package name stays `com.technicjelle.simple_audio_converter.zh`, so an update over an older install keeps its settings. The signing key has not changed. The Windows build targets Windows 10 / 11 x64 and is published in the same v1.6.0 release as the Android APK.
+The Android build ships `arm64-v8a` only, shows `Timbre` as its name and keeps the `ARM64-v8a` tag in the installer filename. The package name stays `com.technicjelle.simple_audio_converter.zh`, so an update over an older install keeps its settings. The signing key has not changed. Windows shares the same Flutter source in this repository; the `windows-latest` workflow generates the runner and packs the zip, and both builds target Windows 10 / 11 x64 only.
 
 ## Contributing
 

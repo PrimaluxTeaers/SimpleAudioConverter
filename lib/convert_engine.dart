@@ -62,6 +62,7 @@ class ConvertEngine {
     required ConversionSettings settings,
     required Directory outputDir,
     required void Function(int index, double progress) onProgress,
+    bool allowBackground = true,
   }) async {
     _cancelled = false;
     final List<ConvertOutcome> results = [];
@@ -71,7 +72,9 @@ class ConvertEngine {
       model = await getFileFromAssets("arnndn-models/std.rnnn");
     }
 
-    await BackgroundProgress.start("Timbre", "${files.length} file(s) queued");
+    if (allowBackground) {
+      await BackgroundProgress.start("Timbre", "${files.length} file(s) queued");
+    }
     try {
       for (int i = 0; i < files.length; i++) {
         if (_cancelled) break;
@@ -150,11 +153,13 @@ class ConvertEngine {
                 1.0,
               );
               onProgress(i, progress);
-              BackgroundProgress.update(
-                "Timbre",
-                info.filename,
-                (i + progress) / files.length,
-              );
+              if (allowBackground) {
+                BackgroundProgress.update(
+                  "Timbre",
+                  info.filename,
+                  (i + progress) / files.length,
+                );
+              }
             }
           },
         );
@@ -166,7 +171,7 @@ class ConvertEngine {
         if (_cancelled) break;
       }
     } finally {
-      await BackgroundProgress.stop();
+      if (allowBackground) await BackgroundProgress.stop();
     }
     return results;
   }

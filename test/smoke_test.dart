@@ -39,7 +39,7 @@ void main() {
     await tester.pumpWidget(const TimbreApp());
     await tester.pumpAndSettle();
 
-    expect(find.text("Timbre 64 位"), findsWidgets);
+    expect(find.text("Timbre"), findsWidgets);
 
     // Everyday list contains MP3 and M4A.
     expect(find.text("M4A (AAC)"), findsOneWidget);

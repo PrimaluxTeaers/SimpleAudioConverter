@@ -15,6 +15,39 @@ class DeviceProfile {
   final bool is64Bit;
   final int sdkInt;
 
+  String get gpuRenderer => (raw["gpuRenderer"] ?? "").trim();
+  String get gpuVendorRaw => (raw["gpuVendor"] ?? "").trim();
+  String get glEsVersion => (raw["glEsVersion"] ?? "").trim();
+  String get gpuSource => (raw["gpuSource"] ?? "").trim();
+
+  bool get gpuKnown => _gpuName != S.t("Unknown", "未识别");
+
+  String get _gpuName {
+    final String r = gpuRenderer.toLowerCase();
+    final String v = gpuVendorRaw.toLowerCase();
+    if (r.contains("g2 ultra") || r.contains("g2-ultra")) {
+      return "Mali-G2 Ultra (Dimensity 9600)";
+    }
+    if (r.contains("g1 ultra") || r.contains("g1-ultra")) {
+      return "Mali-G1 Ultra (Dimensity 9500)";
+    }
+    if (r.contains("immortalis-g925") || r.contains("g925")) {
+      return "Immortalis-G925 (Dimensity 9400 / 9400+)";
+    }
+    if (r.contains("immortalis-g720") || r.contains("g720")) {
+      return "Immortalis-G720 (Dimensity 9300 / 8400 series)";
+    }
+    if (r.contains("g715")) return "Mali-G715 (Dimensity 9200 / 8300)";
+    if (r.contains("g710")) return "Mali-G710 (Dimensity 9000 / 8100)";
+    if (r.contains("g610")) return "Mali-G610 (Dimensity 8000 / 8200)";
+    if (r.contains("xclipse")) return "Xclipse (Exynos)";
+    if (r.contains("adreno") || v.contains("qualcomm")) return "Adreno (Snapdragon)";
+    if (r.contains("mali") || v.contains("arm")) return "Mali";
+    return S.t("Unknown", "未识别");
+  }
+
+  String get gpuLabel => _gpuName;
+
   const DeviceProfile({
     required this.raw,
     required this.cores,
@@ -237,6 +270,7 @@ class DeviceProfile {
   /// 8 Gen 3 and newer (including 8s Gen 4), plus 7 Gen 3/4 and 7+ Gen 2/3.
   /// Snapdragon 7s is deliberately excluded.
   bool get isPrimaryTarget {
+    if (gpuKnown) return true;
     final String name = chipName.toLowerCase();
     if (name.contains("dimensity 9300") ||
         name.contains("dimensity 9400") ||
@@ -254,7 +288,7 @@ class DeviceProfile {
   }
 
   String get targetNote {
-    if (chipName == S.t("Unknown", "未识别")) {
+    if (chipName == S.t("Unknown", "未识别") && !gpuKnown) {
       return S.t(
         "Could not read a chip name. Converting still works; this only affects the compatibility note.",
         "没读到芯片型号。转换照常可用，这只影响兼容提示。",
@@ -311,7 +345,7 @@ class DeviceProfile {
         "系统把 SoC 型号上报成了 0，已用底层属性兜底识别。",
       );
     }
-    if (chipName == S.t("Unknown", "未识别")) {
+    if (chipName == S.t("Unknown", "未识别") && !gpuKnown) {
       return S.t(
         "No recognisable SoC value in any of the known properties.",
         "已知属性里都没有可识别的芯片型号。",

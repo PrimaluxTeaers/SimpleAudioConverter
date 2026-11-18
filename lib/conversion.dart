@@ -76,6 +76,60 @@ class AudioFormat {
     this.detailZh = "",
   });
 
+  String get codecName => switch (id) {
+    "mp3" => "MPEG-1 Layer III (libmp3lame)",
+    "m4a" => "AAC-LC in MP4",
+    "aac" => "AAC-LC, raw ADTS",
+    "ogg" => "Vorbis in Ogg",
+    "opus" => "Opus in Ogg",
+    "flac" => "FLAC",
+    "wav" => "PCM signed 16-bit little-endian",
+    "aiff" => "PCM signed 16-bit big-endian",
+    "alac" => "Apple Lossless (ALAC)",
+    "caf" => "PCM in Core Audio Format",
+    "au" => "PCM in Sun/NeXT AU",
+    "wv" => "WavPack",
+    "amr" => "AMR-NB",
+    "awb" => "AMR-WB",
+    "wma" => "Windows Media Audio 2",
+    "mp2" => "MPEG-1 Layer II",
+    "ac3" => "Dolby Digital (AC-3)",
+    "eac3" => "Dolby Digital Plus (E-AC-3)",
+    _ => id,
+  };
+
+  String get containerName => switch (id) {
+    "mp3" || "aac" || "amr" || "awb" || "mp2" || "ac3" || "eac3" => "Raw bitstream",
+    "ogg" || "opus" => "Ogg",
+    "m4a" || "alac" => "MP4 / M4A",
+    "flac" => "Native FLAC",
+    "wav" => "RIFF / WAVE",
+    "aiff" => "AIFF",
+    "caf" => "Core Audio Format",
+    "au" => "Sun/NeXT AU",
+    "wma" => "ASF",
+    "wv" => "WavPack",
+    _ => ext.toUpperCase(),
+  };
+
+  String get decodeEn => switch (id) {
+    "mp3" || "m4a" || "aac" || "ogg" || "opus" || "flac" || "wav" || "amr" || "awb" =>
+      "Android and desktop players usually decode it natively; this app also has an FFmpeg path.",
+    "alac" => "Apple players decode it natively; many Android players need FFmpeg or a third-party player.",
+    "aiff" || "caf" || "au" || "wv" || "wma" || "mp2" || "ac3" || "eac3" =>
+      "Not universal on phones. This app decodes it with FFmpeg; the receiving device may need a compatible player.",
+    _ => "This app decodes it with FFmpeg; check the target device before sharing.",
+  };
+
+  String get decodeZh => switch (id) {
+    "mp3" || "m4a" || "aac" || "ogg" || "opus" || "flac" || "wav" || "amr" || "awb" =>
+      "安卓和桌面播放器通常能原生解码；本应用另有 FFmpeg 兜底。",
+    "alac" => "苹果设备原生支持；不少安卓播放器要 FFmpeg 或第三方播放器。",
+    "aiff" || "caf" || "au" || "wv" || "wma" || "mp2" || "ac3" || "eac3" =>
+      "手机端不通用。本应用用 FFmpeg 解码；接收设备可能要装兼容播放器。",
+    _ => "本应用用 FFmpeg 解码；发给别人前先确认对方能放。",
+  };
+
   bool get hasCbr => !lossless && (maxKbps > 0 || fixedKbps.isNotEmpty);
   bool get hasVbr => !lossless && vbrMax != null;
   bool get hasFixedSteps => fixedKbps.isNotEmpty;

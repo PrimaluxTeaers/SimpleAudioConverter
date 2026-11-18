@@ -1,9 +1,15 @@
+import "dart:io";
+
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 
 import "dialogs.dart";
+import "font_manager.dart";
+import "font_manager_page.dart";
+import "haptics.dart";
 import "l10n.dart";
 import "output_store.dart";
+import "runtime_settings.dart";
 import "theme.dart";
 
 const String kAppVersion = "1.6.0";
@@ -60,7 +66,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (target != null) _target = target;
     });
     if (target != null) {
-      HapticFeedback.selectionClick();
+      Haptics.selectionClick();
       _toast(S.t("Results will go here from now on.", "之后的转换结果会直接存到这里。"));
     }
   }
@@ -126,6 +132,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 16),
                 _accentPanel(scheme),
                 const SizedBox(height: 16),
+                _fontPanel(scheme),
+                const SizedBox(height: 16),
+                _backgroundPanel(scheme),
+                const SizedBox(height: 16),
+                _feedbackPanel(scheme),
+                const SizedBox(height: 16),
                 _aboutPanel(scheme),
               ]),
             ),
@@ -181,7 +193,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
               selected: <String>{S.mode},
               onSelectionChanged: (Set<String> value) {
-                HapticFeedback.selectionClick();
+                Haptics.selectionClick();
                 S.setMode(value.first);
               },
             ),
@@ -296,7 +308,7 @@ class _SettingsPageState extends State<SettingsPage> {
               final bool selected = widget.seed.toARGB32() == item.$1.toARGB32();
               return GestureDetector(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  Haptics.selectionClick();
                   widget.onSeedChanged(item.$1);
                 },
                 child: Column(
@@ -326,6 +338,140 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               );
             }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fontPanel(ColorScheme scheme) {
+    final String current = FontManager.selectedPath?.split(Platform.pathSeparator).last ??
+        S.t("System default", "系统默认");
+    return _panel(
+      scheme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.font_download_outlined, color: scheme.primary),
+              const SizedBox(width: 10),
+              Text(
+                S.t("Fonts", "字体"),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            S.t("Current: $current", "当前：$current"),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            S.t(
+              "Import TTF/OTF/TTC files, or put them in the app's font folder and tick one in the manager. Untick to return to the system font. Android does not allow a normal app to replace system fonts; this affects this app only.",
+              "可导入 TTF/OTF/TTC，或把文件放进应用字体文件夹，在管理页勾选。取消勾选回到系统字体。安卓不允许普通应用替换系统字体，这里只改本应用。",
+            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
+          FilledButton.tonalIcon(
+            onPressed: () {
+              Haptics.selectionClick();
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const FontManagerPage(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.manage_search_rounded),
+            label: Text(S.t("Manage fonts", "管理字体")),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _backgroundPanel(ColorScheme scheme) {
+    return _panel(
+      scheme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.layers_outlined, color: scheme.primary),
+              const SizedBox(width: 10),
+              Text(
+                S.t("Background", "后台驻留"),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            S.t(
+              "Keep a foreground notification and a wake lock while the batch runs. The system may still stop it under extreme memory pressure.",
+              "批处理运行时保留前台通知和唤醒锁。极端内存压力下，系统仍可能终止进程。",
+            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(S.t("Allow background work", "允许后台驻留")),
+            subtitle: Text(
+              S.t(
+                "When off, conversion still runs while the app is visible.",
+                "关闭后，只有应用在前台可见时继续转换。",
+              ),
+            ),
+            value: RuntimeSettings.backgroundMode,
+            onChanged: (bool value) {
+              setState(() => RuntimeSettings.backgroundMode = value);
+              RuntimeSettings.setBackgroundMode(value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _feedbackPanel(ColorScheme scheme) {
+    return _panel(
+      scheme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.vibration_rounded, color: scheme.primary),
+              const SizedBox(width: 10),
+              Text(
+                S.t("Haptic feedback", "震动反馈"),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            S.t(
+              "On by default. Turn it off to stop every tap and impact vibration.",
+              "默认开启。关闭后所有点按和操作震动都会停。",
+            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(S.t("Vibrate on touch", "点按震动")),
+            value: Haptics.enabled,
+            onChanged: (bool value) {
+              setState(() => Haptics.enabled = value);
+              Haptics.setEnabled(value);
+            },
           ),
         ],
       ),

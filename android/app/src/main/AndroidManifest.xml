@@ -9,7 +9,7 @@
         android:enableOnBackInvokedCallback="true"
 		android:name="${applicationName}"
 		android:icon="@mipmap/ic_launcher"
-		android:label="Timbre 64 位">
+		android:label="Timbre">
 		<service
 			android:name=".ProgressService"
 			android:exported="false"
