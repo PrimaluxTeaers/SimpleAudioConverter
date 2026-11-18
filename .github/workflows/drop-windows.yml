@@ -1,0 +1,46 @@
+name: Drop official windows build
+
+on:
+  push:
+    paths:
+      - .github/workflows/drop-windows.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  drop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cancel Windows runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for id in $(gh run list -R PrimaluxTeaers/SimpleAudioConverter --workflow windows-x64.yml --limit 30 --json databaseId,status --jq '.[] | select(.status=="in_progress" or .status=="queued" or .status=="requested" or .status=="waiting") | .databaseId'); do
+            gh run cancel "$id" -R PrimaluxTeaers/SimpleAudioConverter || true
+          done
+      - name: Apply patch
+        run: |
+          curl -L --fail --retry 5 -o /tmp/update.gz https://aka.doubaocdn.com/s/krojkpoYdX
+          gunzip -c /tmp/update.gz > /tmp/update.patch
+          git apply --index /tmp/update.patch
+      - name: Commit and push
+        run: |
+          git config user.name Teacers
+          git config user.email teacers@users.noreply.github.com
+          git add -A
+          git commit -m 'Drop official Windows build and rewrite platform docs'
+          git rm .github/workflows/drop-windows.yml
+          git commit --amend --no-edit
+          git push
+      - name: Rewrite release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release edit v1.6.0 -R PrimaluxTeaers/SimpleAudioConverter --title 'Timbre 1.6.0 — Android arm64-v8a' --notes-file RELEASE_NOTES_ANDROID.md
+          asset_id=$(gh api repos/PrimaluxTeaers/SimpleAudioConverter/releases/tags/v1.6.0 --jq '.assets[] | select(.name=="Timbre-WindowsX86-64-1.6.0.zip") | .id')
+          if [ -n "$asset_id" ]; then gh api -X DELETE repos/PrimaluxTeaers/SimpleAudioConverter/releases/assets/$asset_id; fi
