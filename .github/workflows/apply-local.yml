@@ -1,0 +1,45 @@
+name: Apply pending update
+
+on:
+  push:
+    paths:
+      - .github/workflows/apply-local.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch patch
+        run: curl -L --fail --retry 5 -o /tmp/update.gz https://aka.doubaocdn.com/s/7dlHCkm2nd
+      - name: Apply patch
+        run: |
+          gunzip -c /tmp/update.gz > /tmp/update.patch
+          git apply --index /tmp/update.patch
+      - name: Commit and push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name Teacers
+          git config user.email teacers@users.noreply.github.com
+          git add -A
+          git commit -m 'Add fixed-stop bitrate control and align docs'
+          git rm .github/workflows/apply-local.yml
+          git commit --amend --no-edit
+          git push
+      - name: Replace Android asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -L --fail --retry 5 -o Timbre-AndroidARM64-v8a-1.6.0.apk https://aka.doubaocdn.com/s/nUBTo8KJ3n
+          test "$(stat -c%s Timbre-AndroidARM64-v8a-1.6.0.apk)" -eq 43758525
+          gh release upload v1.6.0 Timbre-AndroidARM64-v8a-1.6.0.apk --clobber
+      - name: Rebuild Windows asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run windows-x64.yml -R PrimaluxTeaers/SimpleAudioConverter
