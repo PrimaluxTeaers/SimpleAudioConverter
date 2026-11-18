@@ -1,0 +1,32 @@
+name: Check windows build
+
+on:
+  push:
+    paths:
+      - .github/workflows/check-windows.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dispatch and record
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run windows-x64.yml -R PrimaluxTeaers/SimpleAudioConverter || true
+          sleep 10
+          gh run list -R PrimaluxTeaers/SimpleAudioConverter --workflow windows-x64.yml --limit 5 --json databaseId,status,conclusion,createdAt,event > actions-status.txt
+      - name: Commit and remove workflow
+        run: |
+          git config user.name Teacers
+          git config user.email teacers@users.noreply.github.com
+          git add actions-status.txt .github/workflows/check-windows.yml
+          git commit -m 'ci: record windows build queue'
+          git rm .github/workflows/check-windows.yml
+          git commit --amend --no-edit
+          git push
