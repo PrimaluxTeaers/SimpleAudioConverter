@@ -1,0 +1,38 @@
+name: Refresh release metadata
+
+on:
+  push:
+    paths:
+      - .github/workflows/refresh-release.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update release body and repo metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release edit v1.6.0 --notes-file <(cat RELEASE_NOTES_ANDROID.md; printf '\n\n'; cat RELEASE_NOTES_WINDOWS.md)
+          gh repo edit PrimaluxTeaers/SimpleAudioConverter --description '免费开源的 Android / Windows 音频格式转换工具：18 种格式、固定档位码率、批量转换、FFmpeg CPU 编码。' --add-topic android,windows,flutter,audio,converter,ffmpeg,m4a,wav,open-source,offline
+      - name: Verify Android asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v1.6.0 -p Timbre-AndroidARM64-v8a-1.6.0.apk -O /tmp/release.apk --clobber
+          sha256sum /tmp/release.apk > release-status.txt
+          stat -c%s /tmp/release.apk >> release-status.txt
+          gh api repos/PrimaluxTeaers/SimpleAudioConverter/releases/tags/v1.6.0 --jq '.assets[] | "ASSET \(.name) \(.size)"' >> release-status.txt
+      - name: Commit status and remove workflow
+        run: |
+          git config user.name Teacers
+          git config user.email teacers@users.noreply.github.com
+          git add release-status.txt .github/workflows/refresh-release.yml
+          git commit -m 'docs: refresh release metadata'
+          git rm .github/workflows/refresh-release.yml
+          git commit --amend --no-edit
+          git push
