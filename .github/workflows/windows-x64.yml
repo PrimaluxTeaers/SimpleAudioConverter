@@ -51,6 +51,21 @@ jobs:
           Copy-Item "assets/app-icons/timbre.ico" "windows/runner/resources/app_icon.ico" -Force
           Get-Item "windows/runner/resources/app_icon.ico" | Select-Object Name, Length
 
+      - name: Set desktop window title and size
+        shell: pwsh
+        run: |
+          $main = "windows/runner/main.cpp"
+          $text = Get-Content $main -Raw
+          $text = $text -replace 'Win32Window::Size size\(1280, 720\);', 'Win32Window::Size size(1180, 820);'
+          $text = $text -replace 'window\.Create\(L"simple_audio_converter"', 'window.Create(L"Timbre"'
+          Set-Content $main $text -NoNewline
+
+          $rc = "windows/runner/Runner.rc"
+          $rcText = Get-Content $rc -Raw
+          $rcText = $rcText -replace 'VALUE "FileDescription", "simple_audio_converter"', 'VALUE "FileDescription", "Timbre"'
+          $rcText = $rcText -replace 'VALUE "ProductName", "simple_audio_converter"', 'VALUE "ProductName", "Timbre"'
+          Set-Content $rc $rcText -NoNewline
+
       - name: Build release
         shell: bash
         run: flutter build windows --release
@@ -71,17 +86,11 @@ jobs:
           path: Timbre-WindowsX86-64-1.6.0.zip
           retention-days: 30
 
-      - name: Publish Windows release
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        with:
-          tag_name: windows-v1.6.0
-          name: Timbre 1.6.0 — Windows x86-64
-          body: |
-            Windows x86-64 build for Timbre 1.6.0.
-
-            Unzip the package and run `simple_audio_converter.exe`. Audio encoding stays on the bundled FFmpeg; no GPU encoding is claimed. Windows 10/11 x64 only.
-          files: Timbre-WindowsX86-64-1.6.0.zip
-          fail_on_unmatched_files: true
-          prerelease: false
-          make_latest: false
+      - name: Replace the 1.6.0 Windows asset
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/windows-port'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.6.0
+          gh release upload v1.6.0 "Timbre-WindowsX86-64-1.6.0.zip" --clobber
